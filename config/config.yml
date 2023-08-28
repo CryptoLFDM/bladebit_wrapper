@@ -1,0 +1,17 @@
+---
+# mode can be:
+# plot | will only plot until no more free space
+# replot | will plot like plot, but if no space made, will remove plot file with lower compression level
+mode: plot
+
+farmer_key: b162c4b81fbf8d0aae876db016e28292509d69c2ce01227304d879222cb435092105b1f414f2d263a8c920ad44851096
+contract_key: xch1yl3mnukcd2f69vxuava62msp5y7qvjwuq9rc55dcfj3jw4a92t2sgp4dwh
+compression_level: 5
+
+directories_to_plot:
+  - U:\
+  - V:\
+  - W:\
+  - X:\
+  - Y:\
+  - Z:\

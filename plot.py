@@ -20,7 +20,6 @@ def run_plot(disk_path: str):
         'cudaplot',
         Path(disk_path)
     ]
-    log_info(plotter_args)
     try:
         completed_process = subprocess.run(plotter_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                                            shell=True)

@@ -1,6 +1,7 @@
 import os
 import re
 from pathlib import Path
+import time
 
 from config import config, chia_const
 from log_utils import log_info, log_failed, log_success
@@ -35,6 +36,7 @@ def can_delete_plot(plot_path: Path) -> bool:
         if os.path.isfile(plot_path):
             os.remove(plot_path)
             log_success('{} has been deleted'.format(plot_path))
+            time.sleep(0.5)
             return True
     except Exception as e:
         log_failed('An error occurred: {}'.format(e))

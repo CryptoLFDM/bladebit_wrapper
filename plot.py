@@ -6,6 +6,7 @@ from datetime import datetime
 from config import config, chia_const
 from log_utils import log_info, log_failed, log_success, log_warning
 from utils import get_disk_info
+from stagging import get_staging_plot_dir
 
 
 def get_nbr_plottable_max(disk_path: str) -> int:
@@ -31,7 +32,10 @@ def create_plotter_argument(disk_path: str) -> list:
     ]
     if config['plot_with_128GO_ram_only']:
         plotter_args = plotter_args + ['--disk-128', '-t1', Path(config['tmp_plot_directory_for_128go_ram_support'])]
-    plotter_args.append(Path(disk_path))
+    if config['use_staging_directories'] and get_staging_plot_dir() is not None:
+        plotter_args.append(Path(get_staging_plot_dir()))
+    else:
+        plotter_args.append(Path(disk_path))
     return plotter_args
 
 

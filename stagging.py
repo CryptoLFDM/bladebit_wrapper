@@ -1,0 +1,16 @@
+from pathlib import Path
+
+
+from config import config, chia_const
+from log_utils import log_info, log_failed, log_success, log_warning
+from utils import get_disk_info
+
+
+def get_staging_plot_dir() -> str:
+    for staging_disk in config['staging_directories']:
+        _, _, free = get_disk_info(staging_disk)
+        if free / chia_const[config['compression_level']]['gib']:
+            log_info('{} is candidate for staging disk'.format(staging_disk))
+            return staging_disk
+    log_warning('All staging directories are full')
+    return None

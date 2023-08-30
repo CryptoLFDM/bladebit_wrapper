@@ -1,15 +1,15 @@
 import shutil
 import pathlib
 
-from log_utils import log_info, log_failed, log_success, log_warning
+from log_utils import bladebit_plotter_logger, INFO, WARNING, FAILED, SUCCESS
 
 
 def print_disk_info(disk_path: str):
     total, used, free = get_disk_info(disk_path)
-    log_info('Disk: {}'.format(disk_path))
-    log_info("\tTotal: {} GiB".format(total))
-    log_info("\tUsed: {} GiB".format(used))
-    log_info("\tFree: {} GiB\n".format(free))
+    bladebit_plotter_logger.log(INFO, 'Disk: {}'.format(disk_path))
+    bladebit_plotter_logger.log(INFO, "\tTotal: {} GiB".format(total))
+    bladebit_plotter_logger.log(INFO, "\tUsed: {} GiB".format(used))
+    bladebit_plotter_logger.log(INFO, "\tFree: {} GiB\n".format(free))
 
 
 def get_disk_info(disk_path: str) -> tuple[float, float, float]:

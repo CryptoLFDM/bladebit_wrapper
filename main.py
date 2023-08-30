@@ -3,8 +3,9 @@ import multiprocessing
 from harvest_disk import harvest_all_disk, calculate_plot
 from replot import can_delete_plot, find_plot_to_destroy
 from config import config
-from log_utils import log_info, log_failed, log_success
+from log_utils import bladebit_wrapper_logger, INFO, WARNING, FAILED, SUCCESS
 from disk_copy import start_copy
+
 
 def plot_runner():
     circuit_breaker = True
@@ -17,19 +18,17 @@ def plot_runner():
 
 
 def main():
-    log_info('Create process for plotter')
-#    plot_runner_process = multiprocessing.Process(target=plot_runner)
-#    plot_runner_process.start()
-#    plot_runner_process.join()
+    bladebit_wrapper_logger.log(INFO, 'Create process for plotter')
+    plot_runner_process = multiprocessing.Process(target=plot_runner)
+    plot_runner_process.start()
+    plot_runner_process.join()
 
     if config['use_staging_directories']:
         plot_manager_process = multiprocessing.Process(target=start_copy)
         plot_manager_process.start()
         plot_manager_process.join()
 
-    log_info("All Process done, going to exit")
-
-
+    bladebit_wrapper_logger.log(INFO, "All Process done, going to exit")
 
 
 if __name__ == '__main__':

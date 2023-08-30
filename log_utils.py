@@ -25,24 +25,15 @@ log_pattern = '%(asctime)s %(log_color)s%(levelname)s%(reset)s | %(name)s | %(lo
 formatter = colorlog.ColoredFormatter(log_pattern, log_colors=color_mapping)
 handler = logging.StreamHandler()
 handler.setFormatter(formatter)
-logger = logging.getLogger('bladebit-wrapper')
-logger.addHandler(handler)
-logger.setLevel(DEFAULT)
-chia_logger = logging.getLogger('chia.plotters.bladebit')
-chia_logger.addHandler(handler)
 
+bladebit_plotter_logger = logging.getLogger('bladebit.wrapper.plotter')
+bladebit_plotter_logger.addHandler(handler)
+bladebit_plotter_logger.setLevel(DEFAULT)
 
-def log_info(msg: any):
-    logger.log(INFO, msg)
+bladebit_manager_logger = logging.getLogger('bladebit.wrapper.manager')
+bladebit_manager_logger.addHandler(handler)
+bladebit_manager_logger.setLevel(DEFAULT)
 
-
-def log_success(msg: any):
-    logger.log(SUCCESS, msg)
-
-
-def log_failed(msg: any):
-    logger.log(FAILED, msg)
-
-
-def log_warning(msg: any):
-    logger.log(WARNING, msg)
+bladebit_wrapper_logger = logging.getLogger('bladebit.wrapper')
+bladebit_wrapper_logger.addHandler(handler)
+bladebit_wrapper_logger.setLevel(DEFAULT)

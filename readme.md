@@ -38,8 +38,10 @@ mode replot will do the plot mode, but once the wrapper will not be able to plot
 mode: plot
 
 farmer_key: b162c4b81fbf8d0aae876db016e28292509d69c2ce01227304d879222cb435092105b1f414f2d263a8c920ad44851096
-contract_key: xch1yl3mnukcd2f69vxuava62msp5y7qvjwuq9rc55dcfj3jw4a92t2sgp4dwh
+contract_key: xch1tqlg956zauwf8tsljrafg5mwmnksrcgtzl9h6c9e9zrj27rrg0kqjm3gl3
 compression_level: 5
+disk-128: True
+tmpdir: T:\tmp
 
 directories_to_plot:
   - U:\

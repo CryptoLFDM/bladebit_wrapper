@@ -2,6 +2,15 @@
 
 This wrapper will run bladebit_cuda and can take multiple path for destination. It will also delete plot if needed to replot a farm and ensure to maximise your farm size.
 
+<div style="display: flex; align-items: center;">
+  <img src="assets/LFDM.png" alt="Image 1" style="float: left; margin-right: 20px; width: 100px">
+  <a href="https://discord.gg/G6zN82jJdp">
+    <img src="assets/discord.png" alt="Image 2" style="margin-top: 10px; margin-right: 20px;">
+  </a>
+  <p>This code has been build with love by LFDM teams. I you wanna join us, lick discord logo</p>
+
+</div>
+
 ## Install
 
 Ensure you have python & [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git). then run in terminal
@@ -67,7 +76,9 @@ python main.py
 
 You will see log like
 
-![img.png](assets/img.png)
+![img.png](assets/wrapper_log.png)
 
 
 currently failling, only tested on my laptop with a poor amd gpu wich cannot handle it. I will replace it later
+
+Wanna Join the pool ? https://lafermedumineur.fr/tutos-chia/rejoindre-la-pool/

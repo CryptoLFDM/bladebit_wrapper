@@ -42,3 +42,7 @@ def log_success(msg: any):
 
 def log_failed(msg: any):
     logger.log(FAILED, msg)
+
+
+def log_warning(msg: any):
+    logger.log(WARNING, msg)

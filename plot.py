@@ -1,34 +1,56 @@
 import subprocess
 from pathlib import Path
 import platform
+from datetime import datetime
 
 from config import config
-from log_utils import log_info, log_failed, log_success
+from log_utils import log_info, log_failed, log_success, log_warning
+
+
+def get_binary_path() -> Path:
+    if platform.system() == 'Windows':
+        return Path('./binaries/bladebit_cuda.exe')
+    else:
+        return Path('./binaries/bladebit_cuda')
+
+
+def create_plotter_argument(disk_path: str) -> list:
+    plotter_args = [
+        str(get_binary_path()),
+        '-f', str(config['farmer_key']),
+        '-n', '1',
+        '-c', str(config['contract_key']),
+        '--compress', str(config['compression_level']),
+        'cudaplot'
+    ]
+    if config['plot_with_128GO_ram_only']:
+        plotter_args = plotter_args + ['--disk-128', '-t1', Path(config['tmp_plot_directory_for_128go_ram_support'])]
+    plotter_args.append(str(Path(disk_path)))
+    return plotter_args
 
 
 def run_plot(disk_path: str):
-    if platform.system() == 'Windows':
-        plotter_binary = Path('./binaries/bladebit_cuda.exe')
-    else:
-        plotter_binary = Path('./binaries/bladebit_cuda')
-    plotter_args = [
-        plotter_binary,
-        '-n', '1',
-        '-f', config['farmer_key'],
-        '-c', config['contract_key'],
-        '--compress', str(config['compression_level']),
-        'cudaplot',
-        Path(disk_path)
-    ]
+    clock_start = datetime.now()
+    log_info('going to run plot with clock {}'.format(clock_start))
     try:
-        completed_process = subprocess.run(plotter_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                                           shell=True)
-        if completed_process.returncode == 0:
-            log_success("Command executed successfully.")
-            log_success(completed_process.stdout)
-        else:
-            log_failed("Command failed with error:")
-            log_failed(completed_process.stderr)
-    except Exception as e:
-        log_failed("An error occurred: {}".format(e))
+        cmd_string = ' '.join(map(str, create_plotter_argument(disk_path)))
+        log_info('Going to run cmd `{}`'.format(cmd_string))
+        with subprocess.Popen(cmd_string, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True,
+                              text=True) as process:
+            for line in process.stdout:
+                log_info(line.strip())
 
+            for line in process.stderr:
+                log_failed(line.strip())
+        process.wait()
+        if process.returncode == 0:
+            clock_end = datetime.now()
+            delta = clock_end - clock_start
+            log_success(
+                'Command executed successfully. Clock is {}, duration is {} ms'.format(clock_end, delta.seconds))
+        else:
+            clock_end = datetime.now()
+            delta = clock_end - clock_start
+            log_failed('Clock is {}, duration is {} ms. Command failed with error:'.format(clock_end, delta.seconds))
+    except Exception as e:
+        log_failed('An error occurred: {}'.format(e))

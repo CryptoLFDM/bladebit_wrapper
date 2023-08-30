@@ -16,7 +16,7 @@ pip install requierement.txt
 
 ## disclaimer warning
 
-We provide binaries build by ourself from [bladebit](https://github.com/Chia-Network/bladebit). We have choosen this for oen main reason, we are using a special branch [cuda-windows-fix](https://github.com/Chia-Network/bladebit/tree/cuda-windows-fix) wich include plot support for 128Go/256Go in ram for Windows & Linux.
+We provide binaries build by ourself from [bladebit](https://github.com/Chia-Network/bladebit). We have choosen this for one main reason, we are using a special branch [cuda-windows-fix](https://github.com/Chia-Network/bladebit/tree/cuda-windows-fix) wich include plot support for 128Go/256Go in ram for Windows & Linux.
 Once it will be merged, we will get it from [official chia repo](https://downloads.chia.net/).
 
 feel free to build it by ourself if you want 😊
@@ -38,7 +38,7 @@ mode replot will do the plot mode, but once the wrapper will not be able to plot
 mode: plot
 
 farmer_key: b162c4b81fbf8d0aae876db016e28292509d69c2ce01227304d879222cb435092105b1f414f2d263a8c920ad44851096
-contract_key: xch1yl3mnukcd2f69vxuava62msp5y7qvjwuq9rc55dcfj3jw4a92t2sgp4dwh
+contract_key: xch1tqlg956zauwf8tsljrafg5mwmnksrcgtzl9h6c9e9zrj27rrg0kqjm3gl3
 compression_level: 5
 
 directories_to_plot:
@@ -48,6 +48,10 @@ directories_to_plot:
   - X:\
   - Y:\
   - Z:\
+
+plot_with_128GO_ram_only: false
+tmp_plot_directory_for_128go_ram_support: Z:\
+
 ````
 
 

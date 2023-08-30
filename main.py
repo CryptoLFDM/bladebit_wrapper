@@ -1,5 +1,5 @@
-from harvest_disk import harvest_all_disk, calculate_plot, find_plot_to_destroy
-from plot import run_plot
+from harvest_disk import harvest_all_disk, calculate_plot
+from replot import can_delete_plot, find_plot_to_destroy
 from config import config
 
 
@@ -9,8 +9,8 @@ def main():
         disk_space = harvest_all_disk()
         circuit_breaker = calculate_plot(disk_space)
         if config['mode'] == 'replot':
-            disk_path = find_plot_to_destroy()
-            run_plot(disk_path)
+            plot_name = find_plot_to_destroy()
+            circuit_breaker = can_delete_plot(plot_name)
 
 
 if __name__ == '__main__':

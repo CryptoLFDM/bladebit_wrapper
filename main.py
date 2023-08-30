@@ -8,7 +8,7 @@ def main():
     while circuit_breaker:
         disk_space = harvest_all_disk()
         circuit_breaker = calculate_plot(disk_space)
-        if config['mode'] == 'replot':
+        if config['mode'] == 'replot' and circuit_breaker is False:
             plot_name = find_plot_to_destroy()
             circuit_breaker = can_delete_plot(plot_name)
 

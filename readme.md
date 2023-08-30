@@ -3,11 +3,13 @@
 This wrapper will run bladebit_cuda and can take multiple path for destination. It will also delete plot if needed to replot a farm and ensure to maximise your farm size.
 
 <div style="display: flex; align-items: center;">
-  <img src="assets/LFDM.png" alt="Image 1" style="float: left; margin-right: 20px; width: 100px">
-  <a href="https://discord.gg/G6zN82jJdp">
-    <img src="assets/discord.png" alt="Image 2" style="margin-top: 10px; margin-right: 20px;">
+  <a href="https://lafermedumineur.fr/chia-pool-stats/">
+    <img src="assets/LFDM.png" alt="Image 1" style="float: left; margin-right: 20px; width: 100px">
   </a>
-  <p>This code has been build with love by LFDM teams. I you wanna join us, lick discord logo</p>
+  <a href="https://discord.gg/G6zN82jJdp">
+    <img src="assets/discord.png" alt="Image 2" style="float: left ; margin-top: 10px; margin-right: 20px;">
+  </a>
+  <p>This code has been build with love by LFDM teams. If you want to join us, click us</p>
 
 </div>
 

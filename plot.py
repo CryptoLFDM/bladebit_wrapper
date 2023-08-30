@@ -5,7 +5,7 @@ from datetime import datetime
 
 from config import config, chia_const
 from log_utils import log_info, log_failed, log_success, log_warning
-from harvest_disk import get_disk_info
+from utils import get_disk_info
 
 
 def get_nbr_plottable_max(disk_path: str) -> int:

@@ -1,5 +1,3 @@
-from pathlib import Path
-
 
 from config import config, chia_const
 from log_utils import log_info, log_failed, log_success, log_warning

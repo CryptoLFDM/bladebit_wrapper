@@ -6,46 +6,37 @@ from config import config
 from log_utils import log_info, log_failed, log_success
 
 
-def run_plot(disk_path: str):
-    # Detect OS and set plotter binary path
+def get_binary_path() -> Path:
     if platform.system() == 'Windows':
-        plotter_binary = Path('./binaries/bladebit_cuda.exe')
+        return Path('./binaries/bladebit_cuda.exe')
     else:
-        plotter_binary = Path('./binaries/bladebit_cuda')
+        return Path('./binaries/bladebit_cuda')
 
-    # Define common arguments
-    common_args = [
+
+def create_plotter_argument(disk_path: str) -> list:
+    plotter_args = [
+        get_binary_path(),
         '-n', '1',
         '-f', config['farmer_key'],
         '-c', config['contract_key'],
         '--compress', str(config['compression_level']),
+        'cudaplot'
     ]
-
-    # Define optional arguments
-    optional_args = []
-    if "disk-128" in config and config["disk-128"] == True:
-        optional_args.append("--disk-128")
-        optional_args.append("-t1")
-        if not "tmpdir" in config:
-            raise Exception("tmpdir is not defined in config.yml")
-        optional_args.append(Path(config["tmpdir"]))
-
-    # Build final command
-    plotter_args = []
-    plotter_args.append(plotter_binary)
-    plotter_args.extend(common_args)
-    plotter_args.append("cudaplot")
-    plotter_args.extend(optional_args)
+    if config['plot_with_128GO_ram_only']:
+        plotter_args = plotter_args + ['--disk-128', '-t1', Path(config['tmp_plot_directory_for_128go_ram_support'])]
     plotter_args.append(Path(disk_path))
+    return plotter_args
 
+
+def run_plot(disk_path: str):
     try:
-        completed_process = subprocess.run(plotter_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+        completed_process = subprocess.run(create_plotter_argument(disk_path), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                                            shell=True)
         if completed_process.returncode == 0:
-            log_success("Command executed successfully.")
+            log_success('Command executed successfully.')
             log_success(completed_process.stdout)
         else:
-            log_failed("Command failed with error:")
+            log_failed('Command failed with error:')
             log_failed(completed_process.stderr)
     except Exception as e:
-        log_failed("An error occurred: {}".format(e))
+        log_failed('An error occurred: {}'.format(e))

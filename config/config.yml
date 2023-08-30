@@ -16,5 +16,5 @@ directories_to_plot:
   - Y:\
   - Z:\
 
-plot_with_128GO_ram_only: true
+plot_with_128GO_ram_only: false
 tmp_plot_directory_for_128go_ram_support: Z:\

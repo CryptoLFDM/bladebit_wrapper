@@ -19,9 +19,9 @@ def plot_runner():
 
 def main():
     bladebit_wrapper_logger.log(INFO, 'Create process for plotter')
-    plot_runner_process = multiprocessing.Process(target=plot_runner)
-    plot_runner_process.start()
-    plot_runner_process.join()
+#    plot_runner_process = multiprocessing.Process(target=plot_runner)
+#    plot_runner_process.start()
+#    plot_runner_process.join()
 
     if config['use_staging_directories']:
         plot_manager_process = multiprocessing.Process(target=start_copy)

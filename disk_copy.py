@@ -1,6 +1,9 @@
+import shutil
 import sqlite3
-
+from config import config
 from log_utils import bladebit_manager_logger, INFO, WARNING, FAILED, SUCCESS
+import os
+import time
 
 
 con = sqlite3.connect("plot.db")
@@ -37,12 +40,33 @@ def update_plot_by_name(plot_name: str, dest: str, status: str):
     bladebit_manager_logger.log(SUCCESS, 'updated plot {} with status {} and dest {}'.format(plot_name, status, dest))
 
 
+def scan_plots():
+    for staging_dir in config['staging_directories']:
+        for filename in os.listdir(staging_dir):
+            if filename.endswith('.plot'):
+                plot_name = filename
+                source = staging_dir
+
+                insert_new_plot(plot_name, source)
+
+
 def start_copy():
     bladebit_manager_logger.log(INFO, "Going to start plot manager")
-    plot_name = "plot-k32-c05-2023-08-29-13-32-ca00fdcc14deebead979f44fd7f47b38a101d1ee87739f2907deabcf007fa67a.plot"
-    insert_new_plot(plot_name, "/mnt/nveme1")
-    bladebit_manager_logger.log(WARNING, get_plot_by_name(plot_name))
-    update_plot_by_name(plot_name, '/mnt/hydras01', 'in_progess')
-    bladebit_manager_logger.log(WARNING, get_plot_status_by_name(plot_name))
-    update_plot_by_name(plot_name, '/mnt/hydras01', 'done')
-    bladebit_manager_logger.log(WARNING, get_plot_status_by_name(plot_name))
+    scan_plots()
+    cur.execute("SELECT * FROM plots WHERE status IS NULL")
+    results = cur.fetchall()
+    dest_dir = config['directories_to_plot']
+    for result in results:
+        plot_name = result[0]
+        source = result[1]
+        bladebit_manager_logger.log(WARNING, get_plot_by_name(plot_name))
+        current_dest = dest_dir.pop(0) if dest_dir else None
+        if current_dest:
+            update_plot_by_name(plot_name, current_dest, 'in_progess')
+            source_path = os.path.join(source, plot_name)
+            dest_path = os.path.join(current_dest, plot_name)
+            shutil.move(source_path, dest_path)
+            bladebit_manager_logger.log(INFO, f"Moved {plot_name} from {source_path} to {dest_path}")
+            bladebit_manager_logger.log(WARNING, get_plot_status_by_name(plot_name))
+            update_plot_by_name(plot_name, current_dest, 'done')
+        bladebit_manager_logger.log(WARNING, get_plot_status_by_name(plot_name))

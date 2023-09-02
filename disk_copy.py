@@ -1,9 +1,12 @@
 import shutil
 import sqlite3
-from config import config
-from log_utils import bladebit_manager_logger, INFO, WARNING, FAILED, SUCCESS
 import os
-import time
+
+from config import config, chia_const
+from log_utils import bladebit_manager_logger, INFO, WARNING, FAILED, SUCCESS
+from utils import get_disk_info
+# import multiprocessing
+# import time
 
 
 con = sqlite3.connect("plot.db")
@@ -40,33 +43,39 @@ def update_plot_by_name(plot_name: str, dest: str, status: str):
     bladebit_manager_logger.log(SUCCESS, 'updated plot {} with status {} and dest {}'.format(plot_name, status, dest))
 
 
+def left_space_on_directories_to_plots(disk_path: str) -> bool:
+    _, _, free = get_disk_info(disk_path)
+    if free / chia_const[config['compression_level']]['gib'] > 2:
+        return True
+    return False
+
+
 def scan_plots():
     for staging_dir in config['staging_directories']:
         for filename in os.listdir(staging_dir):
             if filename.endswith('.plot'):
-                plot_name = filename
-                source = staging_dir
 
-                insert_new_plot(plot_name, source)
+                insert_new_plot(filename, staging_dir)
 
 
 def start_copy():
     bladebit_manager_logger.log(INFO, "Going to start plot manager")
-    scan_plots()
-    cur.execute("SELECT * FROM plots WHERE status IS NULL")
-    results = cur.fetchall()
     dest_dir = config['directories_to_plot']
-    for result in results:
-        plot_name = result[0]
-        source = result[1]
-        bladebit_manager_logger.log(WARNING, get_plot_by_name(plot_name))
-        current_dest = dest_dir.pop(0) if dest_dir else None
-        if current_dest:
-            update_plot_by_name(plot_name, current_dest, 'in_progess')
-            source_path = os.path.join(source, plot_name)
-            dest_path = os.path.join(current_dest, plot_name)
-            shutil.move(source_path, dest_path)
-            bladebit_manager_logger.log(INFO, f"Moved {plot_name} from {source_path} to {dest_path}")
+    while(left_space_on_directories_to_plots(dest_dir)):
+        scan_plots()
+        cur.execute("SELECT * FROM plots WHERE status IS NULL")
+        results = cur.fetchall()
+        for result in results:
+            plot_name = result[0]
+            source = result[1]
+            bladebit_manager_logger.log(WARNING, get_plot_by_name(plot_name))
+            current_dest = dest_dir.pop(0) if dest_dir else None
+            if current_dest: #je pense que à partir d'ici j'ai tout à revoir mais que avant je suis correct
+                update_plot_by_name(plot_name, current_dest, 'in_progess')
+                source_path = os.path.join(source, plot_name)
+                dest_path = os.path.join(current_dest, plot_name)
+                shutil.move(source_path, dest_path)
+                bladebit_manager_logger.log(INFO, f"Moved {plot_name} from {source_path} to {dest_path}")
+                bladebit_manager_logger.log(WARNING, get_plot_status_by_name(plot_name))
+                update_plot_by_name(plot_name, current_dest, 'done')
             bladebit_manager_logger.log(WARNING, get_plot_status_by_name(plot_name))
-            update_plot_by_name(plot_name, current_dest, 'done')
-        bladebit_manager_logger.log(WARNING, get_plot_status_by_name(plot_name))

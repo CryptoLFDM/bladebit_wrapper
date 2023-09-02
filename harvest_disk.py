@@ -14,7 +14,7 @@ def harvest_all_disk() -> dict:
 
 def process_disk_plotting(disk_name: str):
     bladebit_plotter_logger.log(SUCCESS, 'going to plot on {}'.format(disk_name))
-    if can_plot_at_least_one_plot_safely():
+    if can_plot_at_least_one_plot_safely(disk_name):
         run_plot(disk_name)
     else:
         bladebit_plotter_logger.log(WARNING, 'cannot plot on {} disk have not enough space', disk_name)

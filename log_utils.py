@@ -29,11 +29,10 @@ handler.setFormatter(formatter)
 bladebit_plotter_logger = logging.getLogger('bladebit.wrapper.plotter')
 bladebit_plotter_logger.addHandler(handler)
 bladebit_plotter_logger.setLevel(DEFAULT)
-
 bladebit_manager_logger = logging.getLogger('bladebit.wrapper.manager')
 bladebit_manager_logger.addHandler(handler)
 bladebit_manager_logger.setLevel(DEFAULT)
 
-bladebit_wrapper_logger = logging.getLogger('bladebit.wrapper')
+bladebit_wrapper_logger = logging.getLogger('bladebit.wrapper.main')
 bladebit_wrapper_logger.addHandler(handler)
 bladebit_wrapper_logger.setLevel(DEFAULT)

@@ -9,9 +9,19 @@ from utils import get_disk_info
 from stagging import get_staging_plot_dir
 
 
+def can_plot_at_least_one_plot_safely(disk_path: str) -> bool:
+    _, _, free = get_disk_info(disk_path)
+    if free / chia_const[config['compression_level']]['gib'] > 2:
+        return True
+    return False
+
+
 def get_nbr_plottable_max(disk_path: str) -> int:
     _, _, free = get_disk_info(disk_path)
-    return int(free / chia_const[config['compression_level']]['gib'])
+    max_plottable = int(free / chia_const[config['compression_level']]['gib'])
+    if max_plottable > 1:
+        return max_plottable - 1
+    return max_plottable
 
 
 def get_binary_path() -> Path:

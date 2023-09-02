@@ -1,5 +1,5 @@
 from config import config, chia_const
-from plot import run_plot
+from plot import run_plot, can_plot_at_least_one_plot_safely
 from log_utils import bladebit_plotter_logger, INFO, WARNING, FAILED, SUCCESS
 from utils import get_disk_info, print_disk_info
 
@@ -14,7 +14,10 @@ def harvest_all_disk() -> dict:
 
 def process_disk_plotting(disk_name: str):
     bladebit_plotter_logger.log(SUCCESS, 'going to plot on {}'.format(disk_name))
-    run_plot(disk_name)
+    if can_plot_at_least_one_plot_safely():
+        run_plot(disk_name)
+    else:
+        bladebit_plotter_logger.log(WARNING, 'cannot plot on {} disk have not enough space', disk_name)
 
 
 def calculate_plot(disks_info: dict) -> bool:

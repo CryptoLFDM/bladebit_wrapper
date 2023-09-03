@@ -13,7 +13,7 @@ from replot import can_delete_plot, find_plot_to_destroy
 
 def get_nbr_plottable_max(disk_path: str) -> int:
     _, _, free = get_disk_info(disk_path)
-    max_plottable = int(free / config_loader.chia_const[config_loader.config['compression_level']]['gib'])
+    max_plottable = int(free / config_loader.chia_const[config_loader.Config.compression_level]['gib'])
     if max_plottable > 1:
         return max_plottable - 1
     return max_plottable
@@ -29,15 +29,15 @@ def get_binary_path() -> Path:
 def create_plotter_argument(disk_path: str) -> list:
     plotter_args = [
         get_binary_path(),
-        '-f', config_loader.config['farmer_key'],
+        '-f', config_loader.Config.farmer_key,
         '-n', get_nbr_plottable_max(disk_path),
-        '-c', config_loader.config['contract_key'],
-        '--compress', config_loader.config['compression_level'],
+        '-c', config_loader.Config.contract_key,
+        '--compress', config_loader.Config.compression_level,
         'cudaplot'
     ]
-    if config_loader.config['plot_with_128GO_ram_only']:
-        plotter_args = plotter_args + ['--disk-128', '-t1', Path(config_loader.config['tmp_plot_directory_for_128go_ram_support'])]
-    if config_loader.config['use_staging_directories'] and get_staging_plot_dir() is not None:
+    if config_loader.Config.plot_with_128GO_ram_only:
+        plotter_args = plotter_args + ['--disk-128', '-t1', Path(config_loader.Config.tmp_plot_directory_for_128go_ram_support)]
+    if config_loader.Config.use_staging_directories and get_staging_plot_dir() is not None:
         plotter_args.append(Path(get_staging_plot_dir()))
     else:
         plotter_args.append(Path(disk_path))
@@ -78,7 +78,7 @@ def plot_runner():
         path_plottable = calculate_plot(disk_space)
         if path_plottable is not None:
             run_plot(path_plottable)
-        if config_loader.config['mode'] == 'replot' and path_plottable is False:
+        if config_loader.Config.mode == 'replot' and path_plottable is False:
             plot_name = find_plot_to_destroy()
             path_plottable = can_delete_plot(plot_name)
 

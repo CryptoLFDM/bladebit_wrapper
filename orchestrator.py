@@ -10,12 +10,12 @@ import config_loader
 def bladebit_wrapper_orchestrator():
     processes = []
 
-    if config_loader.config['plotter_enabled']:
+    if config_loader.Config.plotter_enabled:
         bladebit_wrapper_logger.log(INFO, 'Create process for plotter')
         plot_runner_process = multiprocessing.Process(target=plot_runner)
         plot_runner_process.start()
         processes.append(plot_runner_process)
-    if config_loader.config['use_staging_directories']:
+    if config_loader.Config.use_staging_directories:
         bladebit_wrapper_logger.log(INFO, 'Create process for plot manager')
         plot_manager_process = multiprocessing.Process(target=plot_manager)
         plot_manager_process.start()

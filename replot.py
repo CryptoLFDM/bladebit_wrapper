@@ -15,7 +15,7 @@ def does_plot_has_lower_compression(plot_name: str) -> bool:
         bladebit_plotter_logger.log(INFO, '{} is not a compressed plot, going to delete it'.format(plot_name))
         return True
     if plot_compressed_pattern.match(plot_name):
-        if plot_name.split('-')[2][:1] < config_loader.config['compression_level']:
+        if plot_name.split('-')[2][:1] < config_loader.Config.compression_level:
             bladebit_plotter_logger.log(INFO, '{} has a lower compression than specified in config, going to delete it'.format(plot_name))
             return True
     bladebit_plotter_logger.log(INFO, 'Nothing to delete here')
@@ -23,7 +23,7 @@ def does_plot_has_lower_compression(plot_name: str) -> bool:
 
 
 def find_plot_to_destroy() -> Path:
-    for disk in config_loader.config['directories_to_plot']:
+    for disk in config_loader.Config.directories_to_plot:
         files = os.listdir(disk)
         for file in files:
             if does_plot_has_lower_compression(file):

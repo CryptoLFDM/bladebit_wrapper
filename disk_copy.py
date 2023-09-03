@@ -2,9 +2,10 @@ import shutil
 import sqlite3
 import os
 
+from pathlib import Path
 from config import config, chia_const
 from log_utils import bladebit_manager_logger, INFO, WARNING, FAILED, SUCCESS
-from utils import get_disk_info
+from plot import can_plot_at_least_one_plot_safely
 # import multiprocessing
 # import time
 
@@ -43,10 +44,10 @@ def update_plot_by_name(plot_name: str, dest: str, status: str):
     bladebit_manager_logger.log(SUCCESS, 'updated plot {} with status {} and dest {}'.format(plot_name, status, dest))
 
 
-def left_space_on_directories_to_plots(disk_path: str) -> bool:
-    _, _, free = get_disk_info(disk_path)
-    if free / chia_const[config['compression_level']]['gib'] > 2:
-        return True
+def left_space_on_directories_to_plots():
+    for disk in config['directories_to_plot']:
+        if can_plot_at_least_one_plot_safely(disk):
+            return True
     return False
 
 
@@ -61,7 +62,7 @@ def scan_plots():
 def start_copy():
     bladebit_manager_logger.log(INFO, "Going to start plot manager")
     dest_dir = config['directories_to_plot']
-    while(left_space_on_directories_to_plots(dest_dir)):
+    while left_space_on_directories_to_plots():
         scan_plots()
         cur.execute("SELECT * FROM plots WHERE status IS NULL")
         results = cur.fetchall()
@@ -70,12 +71,12 @@ def start_copy():
             source = result[1]
             bladebit_manager_logger.log(WARNING, get_plot_by_name(plot_name))
             current_dest = dest_dir.pop(0) if dest_dir else None
-            if current_dest: #je pense que à partir d'ici j'ai tout à revoir mais que avant je suis correct
+            if current_dest:  # je pense que à partir d'ici j'ai tout à revoir mais que avant je suis correct
                 update_plot_by_name(plot_name, current_dest, 'in_progess')
-                source_path = os.path.join(source, plot_name)
+                Path('./binaries/bladebit_cuda')
                 dest_path = os.path.join(current_dest, plot_name)
-                shutil.move(source_path, dest_path)
-                bladebit_manager_logger.log(INFO, f"Moved {plot_name} from {source_path} to {dest_path}")
+                shutil.move(Path, dest_path)
+                bladebit_manager_logger.log(INFO, 'Moved {} from {} to {}'.format(plot_name, source, dest_path))
                 bladebit_manager_logger.log(WARNING, get_plot_status_by_name(plot_name))
                 update_plot_by_name(plot_name, current_dest, 'done')
             bladebit_manager_logger.log(WARNING, get_plot_status_by_name(plot_name))

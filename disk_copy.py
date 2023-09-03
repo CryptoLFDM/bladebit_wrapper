@@ -8,7 +8,6 @@ from config import config
 from log_utils import bladebit_manager_logger, INFO, WARNING, FAILED, SUCCESS
 from plot import can_plot_at_least_one_plot_safely
 
-
 con = sqlite3.connect("plot.db")
 cur = con.cursor()
 cur.execute("CREATE TABLE IF NOT EXISTS plots(plot_name TEXT UNIQUE, source TEXT, dest TEXT, status TEXT)")
@@ -21,16 +20,15 @@ def get_plot_by_name(plot_name: str):
 
 
 def insert_new_plot(plot_name: str, source: str):
-    if get_plot_by_name(plot_name) is not []:
-        return
-    query = "INSERT INTO plots(plot_name, source, dest, status) VALUES (?, ?, null, null)"
-    values = (plot_name, source)
-    try:
-        cur.execute(query, values)
-        con.commit()
-        bladebit_manager_logger.log(SUCCESS, 'plot {} added into plot manager'.format(plot_name))
-    except sqlite3.Error as e:
-        bladebit_manager_logger.log(FAILED, 'Error occurred while inserting plot {}: {}'.format(plot_name, str(e)))
+    if not get_plot_by_name(plot_name):
+        query = "INSERT INTO plots(plot_name, source, dest, status) VALUES (?, ?, null, null)"
+        values = (plot_name, source)
+        try:
+            cur.execute(query, values)
+            con.commit()
+            bladebit_manager_logger.log(SUCCESS, 'plot {} added into plot manager'.format(plot_name))
+        except sqlite3.Error as e:
+            bladebit_manager_logger.log(FAILED, 'Error occurred while inserting plot {}: {}'.format(plot_name, str(e)))
 
 
 def get_plot_status_by_name(plot_name: str):
@@ -58,8 +56,9 @@ def scan_plots():
             if filename.endswith('.plot'):
                 insert_new_plot(filename, staging_dir)
 
+
 def reset_in_progess_plots_boot():
-    cur.execute("UPDATE plots SET status=NULL WHERE status='in_progress'")
+    cur.execute("UPDATE plots SET status=NULL, dest=NULL WHERE status='in_progress'")
     con.commit()
 
 

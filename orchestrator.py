@@ -1,4 +1,5 @@
 import multiprocessing
+import time
 
 from log_utils import bladebit_wrapper_logger, INFO, WARNING, FAILED, SUCCESS
 from disk_copy import plot_manager
@@ -7,16 +8,23 @@ import config_loader
 
 
 def bladebit_wrapper_orchestrator():
+    processes = []
+
     if config_loader.config['plotter_enabled']:
         bladebit_wrapper_logger.log(INFO, 'Create process for plotter')
         plot_runner_process = multiprocessing.Process(target=plot_runner)
         plot_runner_process.start()
-        plot_runner_process.join()
-
+        processes.append(plot_runner_process)
     if config_loader.config['use_staging_directories']:
         bladebit_wrapper_logger.log(INFO, 'Create process for plot manager')
         plot_manager_process = multiprocessing.Process(target=plot_manager)
         plot_manager_process.start()
-        plot_manager_process.join()
+        processes.append(plot_manager_process)
+    try:
+        for process in processes:
+            process.join()
+    except KeyboardInterrupt:
+        for process in processes:
+            process.join()
 
     bladebit_wrapper_logger.log(INFO, "All Process done, going to exit")

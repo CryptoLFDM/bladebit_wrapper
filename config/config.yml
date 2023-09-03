@@ -14,7 +14,7 @@ directories_to_plot:
   - G:\
 
 plot_with_128GO_ram_only: true
-tmp_plot_directory_for_128go_ram_support: I:\
+tmp_plot_directory_for_128go_ram_support: E:\tmp
 
 use_staging_directories: true
 staging_directories:

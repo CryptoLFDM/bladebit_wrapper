@@ -4,9 +4,9 @@ import os
 import time
 import multiprocessing
 
-from config import config
+import config_loader
 from log_utils import bladebit_manager_logger, INFO, WARNING, FAILED, SUCCESS
-from plot import can_plot_at_least_one_plot_safely
+from utils import can_plot_at_least_one_plot_safely
 
 con = sqlite3.connect("plot.db")
 cur = con.cursor()
@@ -44,7 +44,7 @@ def update_plot_by_name(plot_name: str, dest: str, status: str):
 
 
 def left_space_on_directories_to_plots() -> bool:
-    for disk in config['directories_to_plot']:
+    for disk in config_loader.config['directories_to_plot']:
         if can_plot_at_least_one_plot_safely(disk):
             return True
     return False
@@ -52,7 +52,7 @@ def left_space_on_directories_to_plots() -> bool:
 
 def scan_plots():
     bladebit_manager_logger.log(INFO, 'Scan for new plot in progress')
-    for staging_dir in config['staging_directories']:
+    for staging_dir in config_loader.config['staging_directories']:
         for filename in os.listdir(staging_dir):
             if filename.endswith('.plot'):
                 insert_new_plot(filename, staging_dir)
@@ -92,7 +92,7 @@ def process_plots(destination):
 def plot_manager():
     reset_in_progess_plots_boot()
     bladebit_manager_logger.log(INFO, "Going to start plot manager")
-    dest_dir = config['directories_to_plot']
+    dest_dir = config_loader.config['directories_to_plot']
     num_process = 5
     processes = []
 

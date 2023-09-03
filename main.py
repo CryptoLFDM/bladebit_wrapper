@@ -2,7 +2,7 @@ import multiprocessing
 import click
 
 
-from config import load_config
+from config_loader import load_config
 from orchestrator import bladebit_wrapper_orchestrator
 
 

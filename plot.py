@@ -3,7 +3,7 @@ from pathlib import Path
 import platform
 from datetime import datetime
 
-from config import config, chia_const
+import config_loader
 from log_utils import bladebit_plotter_logger, INFO, WARNING, FAILED, SUCCESS
 from utils import get_disk_info
 from stagging import get_staging_plot_dir
@@ -11,16 +11,9 @@ from harvest_disk import harvest_all_disk, calculate_plot
 from replot import can_delete_plot, find_plot_to_destroy
 
 
-def can_plot_at_least_one_plot_safely(disk_path: str) -> bool:
-    _, _, free = get_disk_info(disk_path)
-    if free / chia_const[config['compression_level']]['gib'] > 2:
-        return True
-    return False
-
-
 def get_nbr_plottable_max(disk_path: str) -> int:
     _, _, free = get_disk_info(disk_path)
-    max_plottable = int(free / chia_const[config['compression_level']]['gib'])
+    max_plottable = int(free / config_loader.chia_const[config_loader.config['compression_level']]['gib'])
     if max_plottable > 1:
         return max_plottable - 1
     return max_plottable
@@ -36,15 +29,15 @@ def get_binary_path() -> Path:
 def create_plotter_argument(disk_path: str) -> list:
     plotter_args = [
         get_binary_path(),
-        '-f', config['farmer_key'],
+        '-f', config_loader.config['farmer_key'],
         '-n', get_nbr_plottable_max(disk_path),
-        '-c', config['contract_key'],
-        '--compress', config['compression_level'],
+        '-c', config_loader.config['contract_key'],
+        '--compress', config_loader.config['compression_level'],
         'cudaplot'
     ]
-    if config['plot_with_128GO_ram_only']:
-        plotter_args = plotter_args + ['--disk-128', '-t1', Path(config['tmp_plot_directory_for_128go_ram_support'])]
-    if config['use_staging_directories'] and get_staging_plot_dir() is not None:
+    if config_loader.config['plot_with_128GO_ram_only']:
+        plotter_args = plotter_args + ['--disk-128', '-t1', Path(config_loader.config['tmp_plot_directory_for_128go_ram_support'])]
+    if config_loader.config['use_staging_directories'] and get_staging_plot_dir() is not None:
         plotter_args.append(Path(get_staging_plot_dir()))
     else:
         plotter_args.append(Path(disk_path))
@@ -79,10 +72,13 @@ def run_plot(disk_path: str):
 
 
 def plot_runner():
-    circuit_breaker = True
-    while circuit_breaker:
+    path_plottable = "None"
+    while path_plottable is not None:
         disk_space = harvest_all_disk()
-        circuit_breaker = calculate_plot(disk_space)
-        if config['mode'] == 'replot' and circuit_breaker is False:
+        path_plottable = calculate_plot(disk_space)
+        if path_plottable is not None:
+            run_plot(path_plottable)
+        if config_loader.config['mode'] == 'replot' and path_plottable is False:
             plot_name = find_plot_to_destroy()
-            circuit_breaker = can_delete_plot(plot_name)
+            path_plottable = can_delete_plot(plot_name)
+

@@ -1,13 +1,12 @@
 import shutil
 import sqlite3
 import os
+import time
+import multiprocessing
 
-from pathlib import Path
-from config import config, chia_const
+from config import config
 from log_utils import bladebit_manager_logger, INFO, WARNING, FAILED, SUCCESS
 from plot import can_plot_at_least_one_plot_safely
-# import multiprocessing
-# import time
 
 
 con = sqlite3.connect("plot.db")
@@ -59,24 +58,42 @@ def scan_plots():
                 insert_new_plot(filename, staging_dir)
 
 
+def process_plots(destination):
+    while left_space_on_directories_to_plots():
+        scan_plots()
+        try:
+            cur.execute("SELECT * FROM plots WHERE status IS NULL LIMIT 1")
+            result = cur.fetchone()
+            if result:
+                plot_name, source, _, _ = result
+                bladebit_manager_logger.log(WARNING, get_plot_by_name(plot_name))
+                update_plot_by_name(plot_name, destination, 'in_progress')
+                source_path = os.path.join(source, plot_name)
+                dest_path = os.path.join(destination, plot_name)
+                shutil.move(source_path, dest_path)
+                bladebit_manager_logger.log(INFO, 'Moved {} from {} to {}'.format(plot_name, source, dest_path))
+                bladebit_manager_logger.log(WARNING, get_plot_status_by_name(plot_name))
+                update_plot_by_name(plot_name, destination, 'done')
+                bladebit_manager_logger.log(WARNING, get_plot_status_by_name(plot_name))
+            else:
+                bladebit_manager_logger.log(FAILED, 'Sleep mode for 10 minutes')
+                time.sleep(600)
+        except Exception as e:
+            bladebit_manager_logger.log(FAILED, str(e))
+            time.sleep(600)
+
+
 def start_copy():
     bladebit_manager_logger.log(INFO, "Going to start plot manager")
     dest_dir = config['directories_to_plot']
-    while left_space_on_directories_to_plots():
-        scan_plots()
-        cur.execute("SELECT * FROM plots WHERE status IS NULL")
-        results = cur.fetchall()
-        for result in results:
-            plot_name = result[0]
-            source = result[1]
-            bladebit_manager_logger.log(WARNING, get_plot_by_name(plot_name))
-            current_dest = dest_dir.pop(0) if dest_dir else None
-            if current_dest:  # je pense que à partir d'ici j'ai tout à revoir mais que avant je suis correct
-                update_plot_by_name(plot_name, current_dest, 'in_progess')
-                Path('./binaries/bladebit_cuda')
-                dest_path = os.path.join(current_dest, plot_name)
-                shutil.move(Path, dest_path)
-                bladebit_manager_logger.log(INFO, 'Moved {} from {} to {}'.format(plot_name, source, dest_path))
-                bladebit_manager_logger.log(WARNING, get_plot_status_by_name(plot_name))
-                update_plot_by_name(plot_name, current_dest, 'done')
-            bladebit_manager_logger.log(WARNING, get_plot_status_by_name(plot_name))
+    num_process = 5
+    processes = []
+
+    for _ in range(num_process):
+        if dest_dir:
+            destination = dest_dir.pop(0)
+            process = multiprocessing.Process(target=process_plots, args=(destination,))
+            processes.append(process)
+            process.start()
+        for process in processes:
+            process.join()

@@ -7,6 +7,8 @@ from config import config, chia_const
 from log_utils import bladebit_plotter_logger, INFO, WARNING, FAILED, SUCCESS
 from utils import get_disk_info
 from stagging import get_staging_plot_dir
+from harvest_disk import harvest_all_disk, calculate_plot
+from replot import can_delete_plot, find_plot_to_destroy
 
 
 def can_plot_at_least_one_plot_safely(disk_path: str) -> bool:
@@ -74,3 +76,13 @@ def run_plot(disk_path: str):
             bladebit_plotter_logger.log(FAILED, 'Clock is {}, duration is {} ms. Command failed with error:'.format(clock_end, delta.seconds))
     except Exception as e:
         bladebit_plotter_logger.log(FAILED, 'An error occurred: {}'.format(e))
+
+
+def plot_runner():
+    circuit_breaker = True
+    while circuit_breaker:
+        disk_space = harvest_all_disk()
+        circuit_breaker = calculate_plot(disk_space)
+        if config['mode'] == 'replot' and circuit_breaker is False:
+            plot_name = find_plot_to_destroy()
+            circuit_breaker = can_delete_plot(plot_name)

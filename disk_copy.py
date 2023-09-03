@@ -1,46 +1,15 @@
 import shutil
-import sqlite3
 import os
 import time
-import multiprocessing
+import threading
 
 import config_loader
 from log_utils import bladebit_manager_logger, INFO, WARNING, FAILED, SUCCESS
 from utils import can_plot_at_least_one_plot_safely
 
-con = sqlite3.connect("plot.db")
-cur = con.cursor()
-cur.execute("CREATE TABLE IF NOT EXISTS plots(plot_name TEXT UNIQUE, source TEXT, dest TEXT, status TEXT)")
+from sqlite import DBPool
 
-
-def get_plot_by_name(plot_name: str) -> list:
-    query = "SELECT * FROM plots WHERE plot_name=?"
-    cur.execute(query, (plot_name,))
-    return cur.fetchall()
-
-
-def insert_new_plot(plot_name: str, source: str):
-    if not get_plot_by_name(plot_name):
-        query = "INSERT INTO plots(plot_name, source, dest, status) VALUES (?, ?, null, null)"
-        values = (plot_name, source)
-        try:
-            cur.execute(query, values)
-            con.commit()
-            bladebit_manager_logger.log(SUCCESS, 'plot {} added into plot manager'.format(plot_name))
-        except sqlite3.Error as e:
-            bladebit_manager_logger.log(FAILED, 'Error occurred while inserting plot {}: {}'.format(plot_name, str(e)))
-
-
-def get_plot_status_by_name(plot_name: str) -> list:
-    query = "SELECT status FROM plots WHERE plot_name=?"
-    cur.execute(query, (plot_name,))
-    return cur.fetchall()
-
-
-def update_plot_by_name(plot_name: str, dest: str, status: str):
-    cur.execute("UPDATE plots SET dest=?, status=? WHERE plot_name=?", (dest, status, plot_name))
-    con.commit()
-    bladebit_manager_logger.log(SUCCESS, 'updated plot {} with status {} and dest {}'.format(plot_name, status, dest))
+DBPool = DBPool()
 
 
 def left_space_on_directories_to_plots() -> bool:
@@ -55,32 +24,25 @@ def scan_plots():
     for staging_dir in config_loader.Config.staging_directories:
         for filename in os.listdir(staging_dir):
             if filename.endswith('.plot'):
-                insert_new_plot(filename, staging_dir)
+                DBPool.insert_new_plot(filename, staging_dir)
 
 
-def reset_in_progess_plots_boot():
-    cur.execute("UPDATE plots SET status=NULL, dest=NULL WHERE status='in_progress'")
-    con.commit()
 
 
 def process_plots(destination):
     while left_space_on_directories_to_plots():
         scan_plots()
         try:
-            cur.execute("SELECT * FROM plots WHERE status IS NULL LIMIT 1")
-            result = cur.fetchone()
+            result = DBPool.get_first_plot_without_status()
             if result:
                 plot_name, source, _, _ = result
-                bladebit_manager_logger.log(WARNING, get_plot_by_name(plot_name))
-                update_plot_by_name(plot_name, destination, 'in_progress')
+                DBPool.update_plot_by_name(plot_name, destination, 'in_progress')
                 source_path = os.path.join(source, plot_name)
                 dest_path = os.path.join(destination, plot_name)
                 shutil.move(source_path, dest_path)
-                with multiprocessing.Lock():
+                with threading.Lock():
                     bladebit_manager_logger.log(INFO, 'Moved {} from {} to {}'.format(plot_name, source, dest_path))
-                    bladebit_manager_logger.log(WARNING, get_plot_status_by_name(plot_name))
-                    update_plot_by_name(plot_name, destination, 'done')
-                    bladebit_manager_logger.log(WARNING, get_plot_status_by_name(plot_name))
+                    DBPool.update_plot_by_name(plot_name, destination, 'done')
             else:
                 bladebit_manager_logger.log(FAILED, 'Sleep mode for 5 minutes')
                 time.sleep(300)
@@ -90,7 +52,7 @@ def process_plots(destination):
 
 
 def plot_manager():
-    reset_in_progess_plots_boot()
+    DBPool.ensure_db_has_not_in_progess_plot_at_start_up()
     bladebit_manager_logger.log(INFO, "Going to start plot manager")
     dest_dir = config_loader.Config.directories_to_plot
     num_process = 5
@@ -99,7 +61,7 @@ def plot_manager():
     for _ in range(num_process):
         if dest_dir:
             destination = dest_dir.pop(0)
-            process = multiprocessing.Process(target=process_plots, args=(destination,))
+            process = threading.Thread(target=process_plots, args=(destination,))
             processes.append(process)
             process.start()
     try:

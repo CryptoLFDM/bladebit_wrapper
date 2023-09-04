@@ -2,10 +2,10 @@ import sys
 
 import yaml
 import pathlib
-from pydantic import BaseModel, DirectoryPath, validator
+from pydantic import BaseModel, DirectoryPath
 from typing import List, Optional
 
-from log_utils import bladebit_wrapper_logger, INFO, WARNING, FAILED, SUCCESS
+import log_utils as wp
 
 
 Config = None
@@ -33,12 +33,12 @@ def load_config(path: str):
             try:
                 global Config
                 Config = WrapperConfig(**yaml.safe_load(yaml_file))
-                bladebit_wrapper_logger.log(SUCCESS, 'Configuration is valid')
+                wp.Logger.bladebit_wrapper_logger.log(wp.Logger.SUCCESS, 'Configuration is valid')
             except ValueError as e:
-                bladebit_wrapper_logger.log(FAILED, 'Configuration is invalid: {}'.format(e))
+                wp.Logger.bladebit_wrapper_logger.log(wp.Logger.FAILED, 'Configuration is invalid: {}'.format(e))
                 sys.exit(1)
     except yaml.YAMLError as e:
-        bladebit_wrapper_logger.log(FAILED, 'Unable to load YAML {} caused by: {}'.format(path, e))
+        wp.Logger.bladebit_wrapper_logger.log(wp.Logger.FAILED, 'Unable to load YAML {} caused by: {}'.format(path, e))
 
 
 def load_chia_const():

@@ -76,6 +76,17 @@ in the same shell as above
 python main.py
 ````
 
+## Test
+
+### to see coverage run
+
+````powershell
+coverage run -m unittest discover -s . -p 'test_*.py'
+coverage report
+coverage html
+````
+
+
 You will see log like
 
 ![img.png](assets/wrapper_log.png)

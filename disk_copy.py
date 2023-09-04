@@ -9,7 +9,7 @@ from utils import can_plot_at_least_one_plot_safely
 
 from sqlite import DBPool
 
-DBPool = DBPool()
+DBPool = DBPool('plot.db')
 
 
 def left_space_on_directories_to_plots() -> bool:

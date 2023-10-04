@@ -16,8 +16,7 @@ def left_space_on_directories_to_plots() -> list[str]:
     available_disks = []
     for disk in config_loader.Config.directories_to_plot:
         total, used, free = get_disk_info(disk)
-        # Vérifier si l'espace disponible est suffisant (+ 87 GiB)
-        if free > 87:
+        if free > config_loader.chia_const[config_loader.Config.compression_level]['gib']:
             available_disks.append(disk)
     return available_disks
 

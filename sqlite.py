@@ -46,9 +46,9 @@ class DBPool:
             values = (str(plot_name), str(source), timestamp)
             return self._execute_query(query, values)
 
-    def get_plot_status_by_name(self, plot_name: str, source: str) -> list:
+    def get_plot_status_by_name(self, plot_name: str) -> list:
         query = "SELECT status FROM plots WHERE plot_name=?"
-        return self._execute_query(query, (str(plot_name), str(source),))
+        return self._execute_query(query, (str(plot_name),))
 
     def update_plot_by_name(self, plot_name: str, dest: str, status: str) -> []:
         query = "UPDATE plots SET dest=?, status=? WHERE plot_name=?"

@@ -51,8 +51,9 @@ def clean_test():
 class TestScanPlots(unittest.TestCase):
     clean_test()
     prepare_test()
+    log_utils.init_logger(debug=False)
 
-    def test_insert_plots(self):
+    def test_1_scan_plots(self):
         # Set up the custom logger with debug mode off
         log_utils.init_logger(debug=False)
         staging_dir = ['tests/fake_disk/Source_A', 'tests/fake_disk/Source_B']
@@ -73,10 +74,29 @@ class TestScanPlots(unittest.TestCase):
             res = DBPool.get_all_plots()
             self.assertPlotsEqual(sorted(sample, key=lambda a: a[0]), sorted(res, key=lambda a: a[0]))
 
+    def test_2_move_plot(self):
+        staging_dir = ['tests/fake_disk/Source_A', 'tests/fake_disk/Source_B']
+        directories_to_plot = ['tests/fake_disk/Dest_A', 'tests/fake_disk/Dest_B', 'tests/fake_disk/Dest_C', 'tests/fake_disk/Dest_D']
+        pool_path = 'plot.db'
+        with patch('config_loader.Config', Mock(**{
+            'directories_to_plot': directories_to_plot,
+            'use_staging_directories': True,
+            'staging_directories': staging_dir
+        })):
+            DBPool = sqlite.DBPool(pool_path)
+            first_plot = DBPool.get_first_plot_without_status()
+            check = disk_copy.move_plot(first_plot[0][0], staging_dir[0], directories_to_plot[0])
+            self.assertEqual(True, check)
+            plots = os.listdir('tests/fake_disk/Dest_A')
+            self.assertEqual(plots[0], first_plot[0][0])
+
+
+
     def assertPlotsEqual(self, sample, res):
         self.assertEqual(len(sample), len(res))
         for item1, item2 in zip(sample, res):
             self.assertEqual(item1[0], item2[0])
+
 
 
 

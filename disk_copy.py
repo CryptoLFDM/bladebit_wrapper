@@ -63,11 +63,18 @@ def process_plots(destination: str):
         wp.Logger.bladebit_manager_logger.log(wp.Logger.FAILED, 'No available space on disks')
 
 
+def set_concurrent_process() -> int:
+    if config_loader.Config.staging_use_process_number:
+        return config_loader.Config.staging_copy_concurrent_process
+    else:
+        return len(config_loader.Config.directories_to_plot)
+
+
 def plot_manager():
     DBPool.ensure_db_has_not_in_progess_plot_at_start_up()
     wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "Going to start plot manager")
     dest_dir = left_space_on_directories_to_plots()
-    num_process = 5
+    num_process = set_concurrent_process()
     processes = []
 
     for _ in range(num_process):

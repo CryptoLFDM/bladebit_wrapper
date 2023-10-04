@@ -26,3 +26,8 @@ staging_directories:
   - tests/fake_disk/Source_B
 
 manager_bdd_path: plot.db
+
+# if false, it will use number of disk in directories_to_plot
+staging_use_process_number: false
+staging_copy_concurrent_process: 5
+

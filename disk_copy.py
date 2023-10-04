@@ -24,7 +24,8 @@ def scan_plots():
     for staging_dir in config_loader.Config.staging_directories:
         for filename in os.listdir(staging_dir):
             if filename.endswith('.plot'):
-                DBPool.insert_new_plot(filename, staging_dir)
+                result = DBPool.insert_new_plot(filename, staging_dir)
+    plots = DBPool.get_all_plots()
 
 
 

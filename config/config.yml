@@ -8,18 +8,21 @@ farmer_key: a256cf662bcb97c03ffb9f5a46101bc474a09a13991730e53fa03f195b9668aed331
 contract_key: xch1tqlg956zauwf8tsljrafg5mwmnksrcgtzl9h6c9e9zrj27rrg0kqjm3gl3
 compression_level: 5
 
-plotter_enabled: true
+plotter_enabled: false
 
 directories_to_plot:
-  - J:\
-  - N:\
-  - G:\
-  - F:\
+  - tests/fake_disk/Dest_A
+  - tests/fake_disk/Dest_B
+  - tests/fake_disk/Dest_C
+  - tests/fake_disk/Dest_D
 
-plot_with_128GO_ram_only: true
+
+plot_with_128GO_ram_only: false
 tmp_plot_directory_for_128go_ram_support: E:\tmp
 
 use_staging_directories: true
 staging_directories:
-  - I:\plots
+  - tests/fake_disk/Source_A
+  - tests/fake_disk/Source_B
 
+manager_bdd_path: plot.db

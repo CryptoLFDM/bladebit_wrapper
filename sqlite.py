@@ -19,6 +19,7 @@ class DBPool:
 
     def _execute_query(self, query: str, values=None) -> list:
         with self.lock:
+            self._create_table()
             con = sqlite3.connect(self.db_file)
             cur = con.cursor()
             try:
@@ -29,8 +30,7 @@ class DBPool:
                 con.commit()
                 return cur.fetchall()
             except sqlite3.Error as e:
-                # Handle the error here
-                pass
+                print(e)
             finally:
                 con.close()
 

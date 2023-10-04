@@ -89,6 +89,8 @@ class TestScanPlots(unittest.TestCase):
             self.assertEqual(True, check)
             plots = os.listdir('tests/fake_disk/Dest_A')
             self.assertEqual(plots[0], first_plot[0][0])
+            status = DBPool.get_plot_status_by_name(first_plot[0][0])
+            self.assertEqual([('done',)], status)
 
 
 

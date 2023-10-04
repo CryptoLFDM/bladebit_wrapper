@@ -22,7 +22,7 @@ git clone https://github.com/CryptoLFDM/bladebit_wrapper.git
 cd bladebit_wrapper
 python3 -m venv .
 source bin/activate
-pip install requierement.txt
+pip install -r requierement.txt
 ````
 
 ## disclaimer warning

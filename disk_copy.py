@@ -26,37 +26,36 @@ def scan_plots():
     for staging_dir in config_loader.Config.staging_directories:
         for filename in os.listdir(staging_dir):
             if filename.endswith('.plot'):
-                result = DBPool.insert_new_plot(filename, staging_dir)
-    plots = DBPool.get_all_plots()
+                _ = DBPool.insert_new_plot(filename, staging_dir)
+    _ = DBPool.get_all_plots()
 
 
-def move_plot(plot_name, source, destination):
+def move_plot(plot_name: str, source: str, destination: str) -> bool:
     try:
         source_path = os.path.join(source, plot_name)
         dest_path = os.path.join(destination, plot_name)
+        wp.Logger.bladebit_manager_logger.log(wp.Logger.SUCCESS, 'Start copy from {} to {}'.format(source, destination))
+        _ = DBPool.update_plot_by_name(str(plot_name), str(destination), 'in_progress')
         shutil.move(source_path, dest_path)
+        _ = DBPool.update_plot_by_name(str(plot_name), str(destination), 'done')
+        wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO,
+                                              'Moved {} from {} to {}'.format(plot_name, source, destination))
         return True
+
     except Exception as e:
         wp.Logger.bladebit_manager_logger.log(wp.Logger.FAILED, 'Error moving {}: {}'.format(plot_name, {str(e)}))
+        _ = DBPool.update_plot_by_name(str(plot_name), str(destination), None)
         return False
 
 
-def process_plots(destination):
+def process_plots(destination: str):
     while left_space_on_directories_to_plots():
         scan_plots()
         result = DBPool.get_first_plot_without_status()
         if result and len(result[0]) == 5:
             plot_name, source, _, _, timestamp = result[0]
             with threading.Lock():
-                wp.Logger.bladebit_manager_logger.log(wp.Logger.SUCCESS, 'Start copy from {} to {}'.format(source, destination))
-                DBPool.update_plot_by_name(str(plot_name), str(destination), 'in_progress')
-            if move_plot(plot_name, source, destination):
-                with threading.Lock():
-                    wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, 'Moved {} from {} to {}'.format(plot_name, source, destination))
-                    DBPool.update_plot_by_name(str(plot_name), str(destination), 'done')
-            else:
-                wp.Logger.bladebit_manager_logger.log(wp.Logger.FAILED, 'Sleep mode for 5 minutes')
-                time.sleep(300)
+                move_plot(plot_name, source, destination)
         else:
             wp.Logger.bladebit_manager_logger.log(wp.Logger.FAILED, 'Sleep mode for 5 minutes')
             time.sleep(300)

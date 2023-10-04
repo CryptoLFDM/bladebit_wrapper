@@ -1,7 +1,7 @@
 import sqlite3
 import threading
 from datetime import datetime
-
+import log_utils as wp
 
 
 class DBPool:
@@ -30,7 +30,9 @@ class DBPool:
                 con.commit()
                 return cur.fetchall()
             except sqlite3.Error as e:
-                print(e)
+                wp.Logger.bladebit_manager_logger.log(wp.Logger.FAILED, str(e))
+                # Handle the error here
+                pass
             finally:
                 con.close()
 
@@ -41,16 +43,16 @@ class DBPool:
     def insert_new_plot(self, plot_name: str, source: str, timestamp: float = datetime.now().timestamp()) -> list:
         if not self.get_plot_by_name(plot_name):
             query = "INSERT INTO plots(plot_name, source, dest, status, timestamp) VALUES (?, ?, null, null, ?)"
-            values = (plot_name, source, timestamp)
+            values = (str(plot_name), str(source), timestamp)
             return self._execute_query(query, values)
 
-    def get_plot_status_by_name(self, plot_name: str) -> list:
+    def get_plot_status_by_name(self, plot_name: str, source: str) -> list:
         query = "SELECT status FROM plots WHERE plot_name=?"
-        return self._execute_query(query, (plot_name,))
+        return self._execute_query(query, (str(plot_name), str(source),))
 
     def update_plot_by_name(self, plot_name: str, dest: str, status: str) -> []:
         query = "UPDATE plots SET dest=?, status=? WHERE plot_name=?"
-        values = (dest, status, plot_name)
+        values = (dest, str(status), str(plot_name))
         return self._execute_query(query, values)
 
     def ensure_db_has_not_in_progess_plot_at_start_up(self) -> list:

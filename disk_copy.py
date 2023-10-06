@@ -2,6 +2,7 @@ import shutil
 import os
 import time
 import threading
+from typing import Tuple
 
 import config_loader
 import log_utils as wp
@@ -10,6 +11,15 @@ from utils import get_disk_info
 from sqlite import DBPool
 
 DBPool = DBPool('plot.db')
+
+
+def get_plot_to_process() -> Tuple[str, str, any, any, float]:
+    result = DBPool.get_first_plot_without_status()
+    if result and len(result[0]) == 5:
+        return result[0]
+    else:
+        wp.Logger.bladebit_manager_logger.log(wp.Logger.FAILED, 'Sleep mode for 5 minutes')
+        time.sleep(300)
 
 
 def left_space_on_directories_to_plots() -> list[str]:
@@ -31,6 +41,10 @@ def scan_plots():
 
 
 def move_plot(plot_name: str, source: str, destination: str) -> bool:
+    chk_plot_name, _, _, _, _ = get_plot_to_process()
+    if chk_plot_name is not plot_name:
+        wp.Logger.bladebit_manager_logger.log(wp.Logger.FAILED, 'seems {} is already procedeed: new plot in queue is {}'.format(plot_name, chk_plot_name))
+        return False
     try:
         source_path = os.path.join(source, plot_name)
         dest_path = os.path.join(destination, plot_name)
@@ -51,14 +65,9 @@ def move_plot(plot_name: str, source: str, destination: str) -> bool:
 def process_plots(destination: str):
     while left_space_on_directories_to_plots():
         scan_plots()
-        result = DBPool.get_first_plot_without_status()
-        if result and len(result[0]) == 5:
-            plot_name, source, _, _, timestamp = result[0]
-            with threading.Lock():
-                move_plot(plot_name, source, destination)
-        else:
-            wp.Logger.bladebit_manager_logger.log(wp.Logger.FAILED, 'Sleep mode for 5 minutes')
-            time.sleep(300)
+        plot_name, source, _, _, timestamp = get_plot_to_process()
+        with threading.Lock():
+            move_plot(plot_name, source, destination)
     else:
         wp.Logger.bladebit_manager_logger.log(wp.Logger.FAILED, 'No available space on disks')
 

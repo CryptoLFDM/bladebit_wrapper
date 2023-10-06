@@ -18,12 +18,14 @@ class WrapperConfig(BaseModel):
     contract_key: str
     compression_level: int
     plotter_enabled: bool
-    directories_to_plot: List[DirectoryPath]
+    directories_to_plot: List[str]
     plot_with_128GO_ram_only: bool
-    tmp_plot_directory_for_128go_ram_support: Optional[DirectoryPath] = None
+    tmp_plot_directory_for_128go_ram_support: Optional[str] = None
     use_staging_directories: bool
-    staging_directories: Optional[List[DirectoryPath]] = None
-
+    staging_directories: Optional[List[str]] = None
+    manager_bdd_path: Optional[str] = None
+    staging_use_process_number: bool
+    staging_copy_concurrent_process: Optional[int] = None
 
 def load_config(path: str):
     load_chia_const()

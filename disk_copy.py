@@ -56,17 +56,17 @@ def move_plot(plot_name: str, source: str, destination: str) -> bool:
 
     except Exception as e:
         wp.Logger.bladebit_manager_logger.log(wp.Logger.FAILED, 'Error moving {}: {}'.format(plot_name, {str(e)}))
-        _ = DBPool.update_plot_by_name(str(plot_name), None, None)
+        _ = DBPool.update_plot_by_name(str(plot_name), None, 'to_process')
         return False
 
 
 def get_first_free_destination() -> str:
     dests = DBPool.get_all_destination_by_status('in_progress')
-    current_in_progress_copy = sorted([t[0] for t in dests])
+    current_in_progress_copy = sorted([str(t[0]) for t in dests])
     target_dir_list = sorted(config_loader.Config.directories_to_plot)
     difference = sorted(list(set(target_dir_list) - set(current_in_progress_copy)))
     if len(difference) > 0:
-        wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "disk {} has no current copy on, so it will be used", difference[0])
+        wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "disk {} has no current copy on, so it will be used".format(difference[0]))
         return difference[0]
     wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "All disk currently used, nothing to do")
     return None

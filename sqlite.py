@@ -42,7 +42,7 @@ class DBPool:
 
     def insert_new_plot(self, plot_name: str, source: str, timestamp: float = datetime.now().timestamp()) -> list:
         if not self.get_plot_by_name(plot_name):
-            query = "INSERT INTO plots(plot_name, source, dest, status, timestamp) VALUES (?, ?, null, null, ?)"
+            query = "INSERT INTO plots(plot_name, source, dest, status, timestamp) VALUES (?, ?, null, 'to_process', ?)"
             values = (str(plot_name), str(source), timestamp)
             return self._execute_query(query, values)
 
@@ -57,12 +57,13 @@ class DBPool:
 
     def ensure_db_has_not_in_progess_plot_at_start_up(self) -> list:
         query = "UPDATE plots SET status=?, dest=? WHERE status=?"
-        values = (None, None, 'in_progress')
+        values = ('to_process', None, 'in_progress')
         return self._execute_query(query, values)
 
     def get_first_plot_without_status(self) -> list:
-        query = "SELECT * FROM plots WHERE status IS NULL ORDER BY timestamp ASC LIMIT 1"
-        return self._execute_query(query)
+        query = "SELECT * FROM plots WHERE status=? ORDER BY timestamp ASC LIMIT 1"
+        values = ('to_process',)
+        return self._execute_query(query, values)
 
     def drop_table(self) -> list:
         query = "DROP TABLE IF EXISTS plots"
@@ -74,10 +75,6 @@ class DBPool:
 
     def get_all_plots(self) -> list:
         query = "SELECT * FROM plots;"
-        return self._execute_query(query)
-
-    def get_n_first_plot_without_status(self, batch_size: int) -> list:
-        query = "SELECT * FROM plots WHERE status IS NULL ORDER BY timestamp ASC LIMIT {}".format(batch_size)
         return self._execute_query(query)
 
     def get_plot_destination_by_name(self, plot_name: str) -> list:

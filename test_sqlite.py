@@ -34,9 +34,9 @@ class SqliteTest(unittest.TestCase):
         DBPool.insert_new_plot(plot_name='beta.plot', source='/mnt/imaginarium', timestamp=clock)
         DBPool2 = sqlite.DBPool('tests/test_plot.db')
         res = DBPool2.get_all_plots()
-        self.assertEqual([('random.plot', '/mnt/imaginarium', None, None, clock),
-                          ('alpha.plot', '/mnt/imaginarium', None, None, clock),
-                          ('beta.plot', '/mnt/imaginarium', None, None, clock)], res)
+        self.assertEqual([('random.plot', '/mnt/imaginarium', None, 'to_process', clock),
+                          ('alpha.plot', '/mnt/imaginarium', None, 'to_process', clock),
+                          ('beta.plot', '/mnt/imaginarium', None, 'to_process', clock)], res)
         DBPool.drop_table()
 
     def test_count_raw(self):
@@ -62,14 +62,14 @@ class SqliteTest(unittest.TestCase):
                            '/mnt/moon',
                            'in_progress',
                            clock),
-                          ('alpha.plot', '/mnt/imaginarium', None, None, clock),
-                          ('beta.plot', '/mnt/imaginarium', None, None, clock)], res)
+                          ('alpha.plot', '/mnt/imaginarium', None, 'to_process', clock),
+                          ('beta.plot', '/mnt/imaginarium', None, 'to_process', clock)], res)
 
         _ = DBPool.ensure_db_has_not_in_progess_plot_at_start_up()
         res = DBPool.get_all_plots()
-        self.assertEqual([('random.plot', '/mnt/imaginarium', None, None, clock),
-                          ('alpha.plot', '/mnt/imaginarium', None, None, clock),
-                          ('beta.plot', '/mnt/imaginarium', None, None, clock)], res)
+        self.assertEqual([('random.plot', '/mnt/imaginarium', None, 'to_process', clock),
+                          ('alpha.plot', '/mnt/imaginarium', None, 'to_process', clock),
+                          ('beta.plot', '/mnt/imaginarium', None, 'to_process', clock)], res)
         DBPool.drop_table()
 
     def test_get_first_plot_without_status(self):
@@ -82,7 +82,7 @@ class SqliteTest(unittest.TestCase):
         clock3 = datetime.now().timestamp()
         DBPool.insert_new_plot(plot_name='beta.plot', source='/mnt/imaginarium', timestamp=clock3)
         res = DBPool.get_first_plot_without_status()
-        self.assertEqual([('alpha.plot', '/mnt/imaginarium', None, None, clock2)], res)
+        self.assertEqual([('alpha.plot', '/mnt/imaginarium', None, 'to_process', clock2)], res)
         DBPool.drop_table()
 
     def test_get_plot_status_by_name(self):
@@ -109,7 +109,7 @@ class SqliteTest(unittest.TestCase):
         clock = datetime.now().timestamp()
         _ = DBPool.insert_new_plot(plot_name='random.plot', source='/mnt/imaginarium', timestamp=clock)
         res = DBPool.get_plot_by_name('random.plot')
-        self.assertEqual([('random.plot', '/mnt/imaginarium', None, None, clock)], res)
+        self.assertEqual([('random.plot', '/mnt/imaginarium', None, 'to_process', clock)], res)
         DBPool.drop_table()
 
 

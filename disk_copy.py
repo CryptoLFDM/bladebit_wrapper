@@ -60,11 +60,13 @@ def move_plot(plot_name: str, source: str, destination: str) -> bool:
         return False
 
 
-def get_first_free_destination():
-    dest = DBPool.get_all_destination_by_status('in_progres')
-    for tpl in dest:
-        if tpl[0] not in config_loader.Config.directories_to_plot:
-            return tpl[0]
+def get_first_free_destination() -> str:
+    dests = DBPool.get_all_destination_by_status('in_progress')
+    current_in_progress_copy = sorted([t[0] for t in dests])
+    target_dir_list = sorted(config_loader.Config.directories_to_plot)
+    difference = sorted(list(set(target_dir_list) - set(current_in_progress_copy)))
+    if len(difference) > 0:
+        return difference[0]
     return None
 
 

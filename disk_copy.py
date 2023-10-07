@@ -56,7 +56,7 @@ def move_plot(plot_name: str, source: str, destination: str) -> bool:
 
     except Exception as e:
         wp.Logger.bladebit_manager_logger.log(wp.Logger.FAILED, 'Error moving {}: {}'.format(plot_name, {str(e)}))
-        _ = DBPool.update_plot_by_name(str(plot_name), None, None)
+        _ = DBPool.update_plot_by_name(str(plot_name), None, 'to_process')
         return False
 
 

@@ -66,33 +66,39 @@ def get_first_free_destination() -> str:
     target_dir_list = sorted(config_loader.Config.directories_to_plot)
     difference = sorted(list(set(target_dir_list) - set(current_in_progress_copy)))
     if len(difference) > 0:
+        wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "disk {} has no current copy on, so it will be used", difference[0])
         return difference[0]
+    wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "All disk currently used, nothing to do")
     return None
 
 
 def set_concurrent_process() -> int:
     if config_loader.Config.staging_use_process_number:
+        wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO,
+                                              "Number of thread set to {} from config file".format(config_loader.Config.staging_copy_concurrent_process))
         return config_loader.Config.staging_copy_concurrent_process
     else:
+        wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO,
+                                              "Number of thread set to {} from destination drive count".format(
+                                                  len(config_loader.Config.directories_to_plot)))
         return len(config_loader.Config.directories_to_plot)
 
 
 def process_plot(name):
     scan_plots()
     timer = random.uniform(2, 20)
-    print("Thread {} has started with a timer of {} seconds".format(name, timer))
+    wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "Thread {} has started with a timer of {} seconds".format(name, timer))
     time.sleep(timer)
     plot_name, source, _, _, _ = get_plot_to_process()
     destination = get_first_free_destination()
     if destination is not None:
         move_plot(plot_name, source, destination)
-    print("Thread {} has finished after {} seconds".format(name, timer))
+    wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "Thread {} has finished after {} seconds".format(name, timer))
 
 
 def plot_manager():
     DBPool.ensure_db_has_not_in_progess_plot_at_start_up()
     wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "Going to start plot manager")
-
     try:
         thread_id = 1
         with concurrent.futures.ThreadPoolExecutor(max_workers=set_concurrent_process()) as executor:

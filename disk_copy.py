@@ -1,7 +1,9 @@
 import shutil
 import os
+import sys
+import concurrent.futures
+import random
 import time
-import threading
 from typing import Tuple
 
 import config_loader
@@ -41,35 +43,29 @@ def scan_plots():
 
 
 def move_plot(plot_name: str, source: str, destination: str) -> bool:
-    chk_plot_name, _, _, _, _ = get_plot_to_process()
-    if chk_plot_name is not plot_name:
-        wp.Logger.bladebit_manager_logger.log(wp.Logger.FAILED, 'seems {} is already procedeed: new plot in queue is {}'.format(plot_name, chk_plot_name))
-        return False
     try:
         source_path = os.path.join(source, plot_name)
         dest_path = os.path.join(destination, plot_name)
         wp.Logger.bladebit_manager_logger.log(wp.Logger.SUCCESS, 'Start copy from {} to {}'.format(source, destination))
         _ = DBPool.update_plot_by_name(str(plot_name), str(destination), 'in_progress')
         shutil.move(source_path, dest_path)
-        _ = DBPool.update_plot_by_name(str(plot_name), str(destination), 'done')
+        _ = DBPool.update_plot_by_name(str(plot_name), None, 'done')
         wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO,
                                               'Moved {} from {} to {}'.format(plot_name, source, destination))
         return True
 
     except Exception as e:
         wp.Logger.bladebit_manager_logger.log(wp.Logger.FAILED, 'Error moving {}: {}'.format(plot_name, {str(e)}))
-        _ = DBPool.update_plot_by_name(str(plot_name), str(destination), None)
+        _ = DBPool.update_plot_by_name(str(plot_name), None, None)
         return False
 
 
-def process_plots(destination: str):
-    while left_space_on_directories_to_plots():
-        scan_plots()
-        plot_name, source, _, _, timestamp = get_plot_to_process()
-        with threading.Lock():
-            move_plot(plot_name, source, destination)
-    else:
-        wp.Logger.bladebit_manager_logger.log(wp.Logger.FAILED, 'No available space on disks')
+def get_first_free_destination():
+    dest = DBPool.get_all_destination_by_status('in_progres')
+    for tpl in dest:
+        if tpl[0] not in config_loader.Config.directories_to_plot:
+            return tpl[0]
+    return None
 
 
 def set_concurrent_process() -> int:
@@ -79,22 +75,29 @@ def set_concurrent_process() -> int:
         return len(config_loader.Config.directories_to_plot)
 
 
+def process_plot(name):
+    scan_plots()
+    timer = random.uniform(2, 20)
+    print("Thread {} has started with a timer of {} seconds".format(name, timer))
+    time.sleep(timer)
+    plot_name, source, _, _, _ = get_plot_to_process()
+    destination = get_first_free_destination()
+    if destination is not None:
+        move_plot(plot_name, source, destination)
+    print("Thread {} has finished after {} seconds".format(name, timer))
+
+
 def plot_manager():
     DBPool.ensure_db_has_not_in_progess_plot_at_start_up()
     wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "Going to start plot manager")
-    dest_dir = left_space_on_directories_to_plots()
-    num_process = set_concurrent_process()
-    processes = []
 
-    for _ in range(num_process):
-        if dest_dir:
-            destination = dest_dir.pop(0)
-            process = threading.Thread(target=process_plots, args=(destination,))
-            processes.append(process)
-            process.start()
     try:
-        for process in processes:
-            process.join()
-    except KeyboardInterrupt:
-        for process in processes:
-            process.join()
+        thread_id = 1
+        with concurrent.futures.ThreadPoolExecutor(max_workers=set_concurrent_process()) as executor:
+            while left_space_on_directories_to_plots() is not []:
+                executor.submit(process_plot, "Moove-{}".format(thread_id))
+                thread_id += 1
+    except KeyboardInterrupt as e:
+        sys.exit(e)
+    except Exception as e:
+        wp.Logger.bladebit_manager_logger.log(wp.Logger.FAILED, "Error {}".format(e))

@@ -75,3 +75,15 @@ class DBPool:
     def get_all_plots(self) -> list:
         query = "SELECT * FROM plots;"
         return self._execute_query(query)
+
+    def get_n_first_plot_without_status(self, batch_size: int) -> list:
+        query = "SELECT * FROM plots WHERE status IS NULL ORDER BY timestamp ASC LIMIT {}".format(batch_size)
+        return self._execute_query(query)
+
+    def get_plot_destination_by_name(self, plot_name: str) -> list:
+        query = "SELECT dest FROM plots WHERE plot_name=?"
+        return self._execute_query(query, (str(plot_name),))
+
+    def get_all_destination_by_status(self, status: str) -> list:
+        query = "SELECT dest FROM plots WHERE status=?"
+        return self._execute_query(query, (str(status),))

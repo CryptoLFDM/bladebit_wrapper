@@ -60,10 +60,10 @@ def move_plot(plot_name: str, source: str, destination: str) -> bool:
         return False
 
 
-def get_first_free_destination() -> str:
+def get_first_free_destination(directories: list[str]) -> str:
     dests = DBPool.get_all_destination_by_status('in_progress')
     current_in_progress_copy = sorted([str(t[0]) for t in dests])
-    target_dir_list = sorted(config_loader.Config.directories_to_plot)
+    target_dir_list = sorted(directories)
     difference = sorted(list(set(target_dir_list) - set(current_in_progress_copy)))
     if len(difference) > 0:
         wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "disk {} has no current copy on, so it will be used".format(difference[0]))
@@ -84,13 +84,13 @@ def set_concurrent_process() -> int:
         return len(config_loader.Config.directories_to_plot)
 
 
-def process_plot(name):
+def process_plot(name: str, directories: list[str]):
     scan_plots()
     timer = random.uniform(2, 20)
     wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "Thread {} has started with a timer of {} seconds".format(name, timer))
     time.sleep(timer)
     plot_name, source, _, _, _ = get_plot_to_process()
-    destination = get_first_free_destination()
+    destination = get_first_free_destination(directories)
     if destination is not None:
         move_plot(plot_name, source, destination)
     wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "Thread {} has finished after {} seconds".format(name, timer))
@@ -102,8 +102,8 @@ def plot_manager():
     try:
         thread_id = 1
         with concurrent.futures.ThreadPoolExecutor(max_workers=set_concurrent_process()) as executor:
-            while left_space_on_directories_to_plots() is not []:
-                executor.submit(process_plot, "Moove-{}".format(thread_id))
+            while directories := left_space_on_directories_to_plots() is not []:
+                executor.submit(process_plot, "Moove-{}".format(thread_id, directories))
                 thread_id += 1
     except KeyboardInterrupt as e:
         sys.exit(e)

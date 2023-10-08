@@ -32,7 +32,8 @@ def left_space_on_directories_to_plots(print_info: bool = None) -> list[str]:
             print_disk_info(disk)
         if free > config_loader.chia_const[config_loader.Config.compression_level]['gib']:
             available_disks.append(disk)
-    wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, 'Disk list available is {}'.format(available_disks))
+    if print_info:
+        wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, 'Disk list available is {}'.format(available_disks))
     return available_disks
 
 

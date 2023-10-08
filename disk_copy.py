@@ -24,11 +24,12 @@ def get_plot_to_process() -> Tuple[str, str, any, any, float]:
         time.sleep(300)
 
 
-def left_space_on_directories_to_plots() -> list[str]:
+def left_space_on_directories_to_plots(print_info: bool = None) -> list[str]:
     available_disks = []
     for disk in config_loader.Config.directories_to_plot:
         total, used, free = get_disk_info(disk)
-        print_disk_info(disk)
+        if print_info:
+            print_disk_info(disk)
         if free > config_loader.chia_const[config_loader.Config.compression_level]['gib']:
             available_disks.append(disk)
     wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, 'Disk list available is {}'.format(available_disks))
@@ -104,11 +105,9 @@ def plot_manager():
     try:
         thread_id = 1
         directories = left_space_on_directories_to_plots()
-        while directories is not []:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=set_concurrent_process()) as executor:
-                directories = left_space_on_directories_to_plots()
-                if directories is []:
-                    sys.exit('All disk are full')
+        with concurrent.futures.ThreadPoolExecutor(max_workers=set_concurrent_process()) as executor:
+            while len(directories) > 0:
+                directories = left_space_on_directories_to_plots(True)
                 executor.submit(process_plot, "Moove-{}".format(thread_id), directories)
                 thread_id += 1
     except KeyboardInterrupt as e:

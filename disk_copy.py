@@ -28,8 +28,6 @@ def left_space_on_directories_to_plots(print_info: bool = None) -> list[str]:
     available_disks = []
     for disk in config_loader.Config.directories_to_plot:
         total, used, free = get_disk_info(disk)
-        if print_info:
-            print_disk_info(disk)
         if free > config_loader.chia_const[config_loader.Config.compression_level]['gib']:
             available_disks.append(disk)
     if print_info:

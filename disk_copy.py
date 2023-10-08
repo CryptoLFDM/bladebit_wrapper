@@ -87,13 +87,13 @@ def set_concurrent_process() -> int:
         return len(config_loader.Config.directories_to_plot)
 
 
-def process_plot(name: str, directories: list[str]):
+def process_plot(name: str):
     scan_plots()
     timer = random.uniform(2, 20)
     wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "Thread {} has started with a timer of {} seconds".format(name, timer))
     time.sleep(timer)
     plot_name, source, _, _, _ = get_plot_to_process()
-    destination = get_first_free_destination(directories)
+    destination = get_first_free_destination(left_space_on_directories_to_plots(True))
     if destination is not None:
         move_plot(plot_name, source, destination)
     wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "Thread {} has finished after {} seconds".format(name, timer))
@@ -105,10 +105,11 @@ def plot_manager():
     try:
         thread_id = 1
         directories = left_space_on_directories_to_plots()
-        with concurrent.futures.ThreadPoolExecutor(max_workers=set_concurrent_process()) as executor:
+        max_thread = set_concurrent_process()
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_thread) as executor:
             while len(directories) > 0:
-                directories = left_space_on_directories_to_plots(True)
-                executor.submit(process_plot, "Moove-{}".format(thread_id), directories)
+                directories = left_space_on_directories_to_plots()
+                executor.submit(process_plot, "Moove-{}".format(thread_id))
                 thread_id += 1
     except KeyboardInterrupt as e:
         sys.exit(e)

@@ -22,7 +22,7 @@ git clone https://github.com/CryptoLFDM/bladebit_wrapper.git
 cd bladebit_wrapper
 python3 -m venv .
 source bin/activate
-pip install requierement.txt
+pip install -r requierement.txt
 ````
 
 ## disclaimer warning
@@ -75,6 +75,17 @@ in the same shell as above
 ````shell
 python main.py
 ````
+
+## Test
+
+### to see coverage run
+
+````powershell
+coverage run -m unittest discover -s . -p 'test_*.py'
+coverage report
+coverage html
+````
+
 
 You will see log like
 

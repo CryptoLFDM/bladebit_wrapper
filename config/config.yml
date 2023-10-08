@@ -4,23 +4,30 @@
 # replot | will plot like plot, but if no space made, will remove plot file with lower compression level
 mode: plot
 
-farmer_key: b162c4b81fbf8d0aae876db016e28292509d69c2ce01227304d879222cb435092105b1f414f2d263a8c920ad44851096
+farmer_key: a256cf662bcb97c03ffb9f5a46101bc474a09a13991730e53fa03f195b9668aed331d5a4fe64bad87fe96a4692a178f4
 contract_key: xch1tqlg956zauwf8tsljrafg5mwmnksrcgtzl9h6c9e9zrj27rrg0kqjm3gl3
 compression_level: 5
 
+plotter_enabled: false
+
 directories_to_plot:
-  - U:\
-  - V:\
-  - W:\
-  - X:\
-  - Y:\
-  - Z:\
+  - tests/fake_disk/Dest_A
+  - tests/fake_disk/Dest_B
+  - tests/fake_disk/Dest_C
+  - tests/fake_disk/Dest_D
+
 
 plot_with_128GO_ram_only: false
-tmp_plot_directory_for_128go_ram_support: Z:\
+tmp_plot_directory_for_128go_ram_support: E:\tmp
 
 use_staging_directories: true
 staging_directories:
-  - /mnt/nvme1
-  - /mnt/nvme2
-  - /mnt/temp
+  - tests/fake_disk/Source_A
+  - tests/fake_disk/Source_B
+
+manager_bdd_path: plot.db
+
+# if false, it will use number of disk in directories_to_plot
+staging_use_process_number: false
+staging_copy_concurrent_process: 5
+

@@ -1,2 +1,6 @@
 PyYAML
 colorlog
+click
+pydantic
+coverage
+touch

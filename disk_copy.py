@@ -8,7 +8,7 @@ from typing import Tuple
 
 import config_loader
 import log_utils as wp
-from utils import get_disk_info
+from utils import get_disk_info, print_disk_info
 
 from sqlite import DBPool
 
@@ -28,8 +28,10 @@ def left_space_on_directories_to_plots() -> list[str]:
     available_disks = []
     for disk in config_loader.Config.directories_to_plot:
         total, used, free = get_disk_info(disk)
+        print_disk_info(disk)
         if free > config_loader.chia_const[config_loader.Config.compression_level]['gib']:
             available_disks.append(disk)
+    wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, 'Disk list available is {}'.format(available_disks))
     return available_disks
 
 
@@ -101,8 +103,12 @@ def plot_manager():
     wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "Going to start plot manager")
     try:
         thread_id = 1
-        with concurrent.futures.ThreadPoolExecutor(max_workers=set_concurrent_process()) as executor:
-            while directories := left_space_on_directories_to_plots() is not []:
+        directories = left_space_on_directories_to_plots()
+        while directories is not []:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=set_concurrent_process()) as executor:
+                directories = left_space_on_directories_to_plots()
+                if directories is []:
+                    sys.exit('All disk are full')
                 executor.submit(process_plot, "Moove-{}".format(thread_id, directories))
                 thread_id += 1
     except KeyboardInterrupt as e:

@@ -8,7 +8,7 @@ from typing import Tuple
 
 import config_loader
 import log_utils as wp
-from utils import get_disk_info
+from utils import get_disk_info, print_disk_info
 
 from sqlite import DBPool
 
@@ -24,12 +24,15 @@ def get_plot_to_process() -> Tuple[str, str, any, any, float]:
         time.sleep(300)
 
 
-def left_space_on_directories_to_plots() -> list[str]:
+def left_space_on_directories_to_plots(print_info: bool = None) -> list[str]:
     available_disks = []
     for disk in config_loader.Config.directories_to_plot:
         total, used, free = get_disk_info(disk)
+        if print_info:
+            print_disk_info(disk)
         if free > config_loader.chia_const[config_loader.Config.compression_level]['gib']:
             available_disks.append(disk)
+    wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, 'Disk list available is {}'.format(available_disks))
     return available_disks
 
 
@@ -60,13 +63,13 @@ def move_plot(plot_name: str, source: str, destination: str) -> bool:
         return False
 
 
-def get_first_free_destination() -> str:
+def get_first_free_destination(directories: list[str]) -> str:
     dests = DBPool.get_all_destination_by_status('in_progress')
-    current_in_progress_copy = sorted([t[0] for t in dests])
-    target_dir_list = sorted(config_loader.Config.directories_to_plot)
+    current_in_progress_copy = sorted([str(t[0]) for t in dests])
+    target_dir_list = sorted(directories)
     difference = sorted(list(set(target_dir_list) - set(current_in_progress_copy)))
     if len(difference) > 0:
-        wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "disk {} has no current copy on, so it will be used", difference[0])
+        wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "disk {} has no current copy on, so it will be used".format(difference[0]))
         return difference[0]
     wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "All disk currently used, nothing to do")
     return None
@@ -84,13 +87,13 @@ def set_concurrent_process() -> int:
         return len(config_loader.Config.directories_to_plot)
 
 
-def process_plot(name):
+def process_plot(name: str):
     scan_plots()
     timer = random.uniform(2, 20)
     wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "Thread {} has started with a timer of {} seconds".format(name, timer))
     time.sleep(timer)
     plot_name, source, _, _, _ = get_plot_to_process()
-    destination = get_first_free_destination()
+    destination = get_first_free_destination(left_space_on_directories_to_plots(True))
     if destination is not None:
         move_plot(plot_name, source, destination)
     wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "Thread {} has finished after {} seconds".format(name, timer))
@@ -101,11 +104,14 @@ def plot_manager():
     wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "Going to start plot manager")
     try:
         thread_id = 1
-        with concurrent.futures.ThreadPoolExecutor(max_workers=set_concurrent_process()) as executor:
-            while left_space_on_directories_to_plots() is not []:
+        directories = left_space_on_directories_to_plots()
+        max_thread = set_concurrent_process()
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_thread) as executor:
+            while len(directories) > 0:
+                directories = left_space_on_directories_to_plots()
                 executor.submit(process_plot, "Moove-{}".format(thread_id))
                 thread_id += 1
     except KeyboardInterrupt as e:
         sys.exit(e)
     except Exception as e:
-        wp.Logger.bladebit_manager_logger.log(wp.Logger.FAILED, "Error {}".format(e))
+        wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "Error {}".format(e))

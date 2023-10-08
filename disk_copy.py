@@ -109,9 +109,9 @@ def plot_manager():
                 directories = left_space_on_directories_to_plots()
                 if directories is []:
                     sys.exit('All disk are full')
-                executor.submit(process_plot, "Moove-{}".format(thread_id, directories))
+                executor.submit(process_plot, "Moove-{}".format(thread_id), directories)
                 thread_id += 1
     except KeyboardInterrupt as e:
         sys.exit(e)
     except Exception as e:
-        wp.Logger.bladebit_manager_logger.log(wp.Logger.FAILED, "Error {}".format(e))
+        wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "Error {}".format(e))

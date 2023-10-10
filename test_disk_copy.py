@@ -64,9 +64,8 @@ class TestScanPlots(unittest.TestCase):
             'use_staging_directories': True,
             'staging_directories': staging_dir
         })):
-            disk_copy.scan_plots()
-
             DBPool = sqlite.DBPool(pool_path)
+            disk_copy.scan_plots()
             res = DBPool.get_all_plots()
             self.assertPlotsEqual(sorted(sample, key=lambda a: a[0]), sorted(res, key=lambda a: a[0]))
 
@@ -80,7 +79,6 @@ class TestScanPlots(unittest.TestCase):
             'staging_directories': staging_dir
         })):
             DBPool = sqlite.DBPool(pool_path)
-            DBPool.get_all_plots()
             first_plot = DBPool.get_first_plot_without_status_and_change_status()
             check = disk_copy.move_plot(first_plot, staging_dir[0], directories_to_plot[0])
             self.assertEqual(True, check)

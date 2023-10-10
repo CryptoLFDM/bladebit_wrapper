@@ -133,3 +133,4 @@ class DBPool:
 
     def insert_new_plot_if_not_exist(self, plot_name: str, source: str, timestamp: float = datetime.now().timestamp()) -> bool:
         return self._safe_insert_if_not_exist(plot_name, source, timestamp)
+

@@ -58,6 +58,26 @@ class DBPool:
             finally:
                 con.close()
 
+    def _safe_insert_if_not_exist(self, plot_name: str, source: str, timestamp: float):
+        with self.lock:
+            try:
+                con = sqlite3.connect(self.db_file)
+                cursor = con.cursor()
+
+                cursor.execute("SELECT * FROM plots WHERE plot_name='{}'".format(plot_name))
+                current_value = cursor.fetchone()
+
+                if current_value is None:
+                    query = "INSERT INTO plots(plot_name, source, dest, status, timestamp) VALUES (?, ?, null, 'to_process', ?)"
+                    values = (str(plot_name), str(source), timestamp)
+                    cursor.execute(query, values)
+                    con.commit()
+                    return True
+            except sqlite3.Error as e:
+                wp.Logger.bladebit_manager_logger.log(wp.Logger.FAILED, str(e))
+            finally:
+                con.close()
+
     def get_plot_by_name(self, plot_name: str) -> list:
         query = "SELECT * FROM plots WHERE plot_name=?"
         return self._execute_query(query, (plot_name,))
@@ -110,3 +130,6 @@ class DBPool:
     def get_first_plot_without_status_and_change_status(self) -> str:
         select_query = "SELECT * FROM plots WHERE status='{}' ORDER BY timestamp ASC LIMIT 1".format('to_process')
         return self._safe_read_and_update_value(select_query)
+
+    def insert_new_plot_if_not_exist(self, plot_name: str, source: str, timestamp: float = datetime.now().timestamp()) -> bool:
+        return self._safe_insert_if_not_exist(plot_name, source, timestamp)

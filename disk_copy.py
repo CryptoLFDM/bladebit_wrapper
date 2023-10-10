@@ -37,11 +37,16 @@ def left_space_on_directories_to_plots(print_info: bool = None) -> list[str]:
 
 
 def scan_plots():
+    i = 0
     wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, 'Scan for new plot in progress')
     for staging_dir in config_loader.Config.staging_directories:
         for filename in os.listdir(staging_dir):
             if filename.endswith('.plot'):
-                _ = DBPool.insert_new_plot(filename, staging_dir)
+                res = DBPool.insert_new_plot_if_not_exist(filename, staging_dir)
+                if res is True and res is not None:
+                    i = i + 1
+                    wp.Logger.bladebit_manager_logger.log(wp.Logger.SUCCESS, 'Added new plot {} from {}'.format(filename, staging_dir))
+    wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, 'Added {} plots during this scan'.format(i))
     _ = DBPool.get_all_plots()
 
 
@@ -50,7 +55,6 @@ def move_plot(plot_name: str, source: str, destination: str) -> bool:
         source_path = os.path.join(source, plot_name)
         dest_path = os.path.join(destination, plot_name)
         wp.Logger.bladebit_manager_logger.log(wp.Logger.SUCCESS, 'Start copy from {} to {}'.format(source, destination))
-        _ = DBPool.update_plot_by_name(str(plot_name), str(destination), 'in_progress')
         shutil.move(source_path, dest_path)
         _ = DBPool.update_plot_by_name(str(plot_name), None, 'done')
         wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO,

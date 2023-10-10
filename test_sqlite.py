@@ -121,6 +121,15 @@ class SqliteTest(unittest.TestCase):
         self.assertEqual([('safe_lock_get_update.plot', '/mnt/olympus', None, 'in_progress', clock)], res)
         DBPool.drop_table()
 
+    def test_insert_new_plot_if_not_exist(self):
+        DBPool = sqlite.DBPool('tests/test_plot.db')
+        clock = datetime.now().timestamp()
+        res = DBPool.insert_new_plot_if_not_exist(plot_name='should_be_inserted.plot', source='/mnt/olympus', timestamp=clock)
+        self.assertEqual(True, res)
+        res = DBPool.insert_new_plot_if_not_exist(plot_name='should_be_inserted.plot', source='/mnt/olympus', timestamp=clock)
+        self.assertEqual(None, res)
+
+
 
 if __name__ == '__main__':
     unittest.main()

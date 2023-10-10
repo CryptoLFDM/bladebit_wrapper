@@ -80,12 +80,13 @@ class TestScanPlots(unittest.TestCase):
             'staging_directories': staging_dir
         })):
             DBPool = sqlite.DBPool(pool_path)
-            first_plot = DBPool.get_first_plot_without_status()
-            check = disk_copy.move_plot(first_plot[0][0], staging_dir[0], directories_to_plot[0])
+            DBPool.get_all_plots()
+            first_plot = DBPool.get_first_plot_without_status_and_change_status()
+            check = disk_copy.move_plot(first_plot, staging_dir[0], directories_to_plot[0])
             self.assertEqual(True, check)
             plots = os.listdir('tests/fake_disk/Dest_A')
-            self.assertEqual(plots[0], first_plot[0][0])
-            status = DBPool.get_plot_status_by_name(first_plot[0][0])
+            self.assertEqual(plots[0], first_plot)
+            status = DBPool.get_plot_status_by_name(first_plot)
             self.assertEqual([('done',)], status)
 
     def test_3_get_first_free_destination(self):
@@ -102,15 +103,15 @@ class TestScanPlots(unittest.TestCase):
 
             DBPool.update_plot_by_name(res[0][0], directories_to_plot[0], 'in_progress')
             DBPool.update_plot_by_name(res[1][0], directories_to_plot[1], 'in_progress')
-            first_dest = disk_copy.get_first_free_destination()
+            first_dest = disk_copy.get_first_free_destination(directories_to_plot)
             self.assertEqual('tests/fake_disk/Dest_C', first_dest)
 
             DBPool.update_plot_by_name(res[2][0], directories_to_plot[2], 'in_progress')
-            second_dest = disk_copy.get_first_free_destination()
+            second_dest = disk_copy.get_first_free_destination(directories_to_plot)
             self.assertEqual('tests/fake_disk/Dest_D', second_dest)
 
             DBPool.update_plot_by_name(res[3][0], directories_to_plot[3], 'in_progress')
-            third_dest = disk_copy.get_first_free_destination()
+            third_dest = disk_copy.get_first_free_destination(directories_to_plot)
             self.assertEqual(None, third_dest)
 
     def assertPlotsEqual(self, sample, res):

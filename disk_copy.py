@@ -15,13 +15,14 @@ from sqlite import DBPool
 DBPool = DBPool('plot.db')
 
 
-def get_plot_to_process() -> Tuple[str, str, any, any, float]:
-    result = DBPool.get_first_plot_without_status()
-    if result and len(result[0]) == 5:
-        return result[0]
+def get_plot_to_process() -> str:
+    result = DBPool.get_first_plot_without_status_and_change_status()
+    if result is not None and result.endswith('.plot'):
+        return result
     else:
         wp.Logger.bladebit_manager_logger.log(wp.Logger.FAILED, 'Sleep mode for 5 minutes')
         time.sleep(300)
+        return None
 
 
 def left_space_on_directories_to_plots(print_info: bool = None) -> list[str]:
@@ -91,10 +92,16 @@ def process_plot(name: str):
     timer = random.uniform(2, 20)
     wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "Thread {} has started with a timer of {} seconds".format(name, timer))
     time.sleep(timer)
-    plot_name, source, _, _, _ = get_plot_to_process()
-    destination = get_first_free_destination(left_space_on_directories_to_plots(True))
-    if destination is not None:
-        move_plot(plot_name, source, destination)
+    plot_name = get_plot_to_process()
+    if plot_name is not None:
+        destination = get_first_free_destination(left_space_on_directories_to_plots(True))
+        if destination is not None:
+            plot_name, source, _, _, _ = DBPool.get_plot_by_name(plot_name)
+            move_plot(plot_name, source, destination)
+        else:
+            wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "No available destination  found")
+    else:
+        wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "No available plot found")
     wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "Thread {} has finished after {} seconds".format(name, timer))
 
 

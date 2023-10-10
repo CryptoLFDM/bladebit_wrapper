@@ -99,11 +99,13 @@ def process_plot(name: str):
     plot_name = get_plot_to_process()
     if plot_name is not None:
         destination = get_first_free_destination(left_space_on_directories_to_plots(True))
+        wp.Logger.bladebit_manager_logger.log(wp.Logger.DEBUG, "Value of destination = {}".format(destination))
         if destination is not None:
             plot_name, source, _, _, _ = DBPool.get_plot_by_name(plot_name)
             move_plot(plot_name, source, destination)
         else:
-            wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "No available destination  found")
+            DBPool.update_status_by_plot_name(plot_name, 'to_process')
+            wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "No available destination found")
     else:
         wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "No available plot found")
     wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "Thread {} has finished after {} seconds".format(name, timer))
@@ -114,7 +116,7 @@ def plot_manager():
     wp.Logger.bladebit_manager_logger.log(wp.Logger.INFO, "Going to start plot manager")
     try:
         thread_id = 1
-        directories = left_space_on_directories_to_plots()
+        directories = 1
         max_thread = set_concurrent_process()
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_thread) as executor:
             while len(directories) > 0:

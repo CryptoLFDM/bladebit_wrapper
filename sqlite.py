@@ -97,6 +97,11 @@ class DBPool:
         values = (dest, str(status), str(plot_name))
         return self._execute_query(query, values)
 
+    def update_status_by_plot_name(self, plot_name: str, status: str) -> []:
+        query = "UPDATE plots SET status=? WHERE plot_name=?"
+        values = (str(status), str(plot_name))
+        return self._execute_query(query, values)
+
     def ensure_db_has_not_in_progess_plot_at_start_up(self) -> list:
         query = "UPDATE plots SET status=?, dest=? WHERE status=?"
         values = ('to_process', None, 'in_progress')

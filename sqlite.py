@@ -36,6 +36,48 @@ class DBPool:
             finally:
                 con.close()
 
+    def _safe_read_and_update_value(self, select_query: str):
+        with self.lock:
+            try:
+                con = sqlite3.connect(self.db_file)
+                cursor = con.cursor()
+
+                cursor.execute(select_query)
+                current_value = cursor.fetchone()
+
+                if current_value:
+                    plot_name, _, _, _, _ = current_value
+                    update_query = "UPDATE plots SET status='{}' WHERE plot_name='{}'".format('in_progress', plot_name)
+
+                    cursor.execute(update_query)
+                    con.commit()
+                    return plot_name
+            except sqlite3.Error as e:
+                wp.Logger.bladebit_manager_logger.log(wp.Logger.FAILED, str(e))
+                pass
+            finally:
+                con.close()
+
+    def _safe_insert_if_not_exist(self, plot_name: str, source: str, timestamp: float):
+        with self.lock:
+            try:
+                con = sqlite3.connect(self.db_file)
+                cursor = con.cursor()
+
+                cursor.execute("SELECT * FROM plots WHERE plot_name='{}'".format(plot_name))
+                current_value = cursor.fetchone()
+
+                if current_value is None:
+                    query = "INSERT INTO plots(plot_name, source, dest, status, timestamp) VALUES (?, ?, null, 'to_process', ?)"
+                    values = (str(plot_name), str(source), timestamp)
+                    cursor.execute(query, values)
+                    con.commit()
+                    return True
+            except sqlite3.Error as e:
+                wp.Logger.bladebit_manager_logger.log(wp.Logger.FAILED, str(e))
+            finally:
+                con.close()
+
     def get_plot_by_name(self, plot_name: str) -> list:
         query = "SELECT * FROM plots WHERE plot_name=?"
         return self._execute_query(query, (plot_name,))
@@ -53,6 +95,11 @@ class DBPool:
     def update_plot_by_name(self, plot_name: str, dest: str, status: str) -> []:
         query = "UPDATE plots SET dest=?, status=? WHERE plot_name=?"
         values = (dest, str(status), str(plot_name))
+        return self._execute_query(query, values)
+
+    def update_status_by_plot_name(self, plot_name: str, status: str) -> []:
+        query = "UPDATE plots SET status=? WHERE plot_name=?"
+        values = (str(status), str(plot_name))
         return self._execute_query(query, values)
 
     def ensure_db_has_not_in_progess_plot_at_start_up(self) -> list:
@@ -84,3 +131,11 @@ class DBPool:
     def get_all_destination_by_status(self, status: str) -> list:
         query = "SELECT dest FROM plots WHERE status=?"
         return self._execute_query(query, (str(status),))
+
+    def get_first_plot_without_status_and_change_status(self) -> str:
+        select_query = "SELECT * FROM plots WHERE status='{}' ORDER BY timestamp ASC LIMIT 1".format('to_process')
+        return self._safe_read_and_update_value(select_query)
+
+    def insert_new_plot_if_not_exist(self, plot_name: str, source: str, timestamp: float = datetime.now().timestamp()) -> bool:
+        return self._safe_insert_if_not_exist(plot_name, source, timestamp)
+
